@@ -38,7 +38,7 @@ class JuChaoSearch(SpiderBase):
           `id` int(11) NOT NULL AUTO_INCREMENT,
           `SecuCode` varchar(8) NOT NULL COMMENT '证券代码',
           `SecuAbbr` varchar(16) NOT NULL COMMENT '证券代码',
-          `AntId` int(11) NOT NULL COMMENT '巨潮自带公告 ID', 
+          `AntId` int(20) NOT NULL COMMENT '巨潮自带公告 ID', 
           `AntTime` datetime NOT NULL COMMENT '发布时间',
           `AntTitle` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '资讯标题',
           `AntDoc` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '公告详情页链接',
@@ -46,8 +46,8 @@ class JuChaoSearch(SpiderBase):
           `UPDATETIMEJZ` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           PRIMARY KEY (`id`),
           UNIQUE KEY `ant_id` (`AntId`),
-          UNIQUE KEY `code_doc` (`SecuCode`,`AntDoc`),
           KEY `ant_time` (`AntTime`),
+          KEY `secucode` (`SecuCode`),
           KEY `update_time` (`UPDATETIMEJZ`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巨潮个股公告关联';  
         '''.format(self.history_table_name)
@@ -82,7 +82,7 @@ class JuChaoSearch(SpiderBase):
                 'sortType': '',
                 'isHLtitle': True,
             }
-            resp = requests.post(self.api, headers=self.headers, data=post_data)
+            resp = requests.post(self.api, headers=self.headers, data=post_data, timeout=3)
             if resp.status_code == 200:
                 text = resp.text
                 print(text)
@@ -91,7 +91,7 @@ class JuChaoSearch(SpiderBase):
                 exist_count = self.get_exist_count()
                 print("web", web_count)
                 print("exist", exist_count)
-                if web_count == exist_count:
+                if web_count == exist_count or (web_count - exist_count < 10):
                     print("当前证券历史已导入")
                     return
                 ants = py_datas.get("announcements")
