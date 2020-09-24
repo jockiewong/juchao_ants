@@ -21,6 +21,7 @@ class JuChaoCodeMap(SpiderBase):
             `category` varchar(8) NOT NULL COMMENT '证券分类',
             `pinyin` varchar(10) NOT NULL COMMENT '证券中文名拼音',
             `zwjc` varchar(20) NOT NULL COMMENT '证券中文名',
+            `count` int(11) NOT NULL DEFAULT 0 COMMENT '当前入库公告个数', 
             `CREATETIMEJZ` datetime DEFAULT CURRENT_TIMESTAMP,
             `UPDATETIMEJZ` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
@@ -28,6 +29,7 @@ class JuChaoCodeMap(SpiderBase):
             KEY `update_time` (`UPDATETIMEJZ`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巨潮证券编码';
         '''
+        # alter table juchao_codemap add `count` int(11) NOT NULL DEFAULT 0 COMMENT '当前入库公告个数';
         self._spider_init()
         self.spider_client.insert(sql)
         self.spider_client.end()
