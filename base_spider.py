@@ -74,26 +74,8 @@ class SpiderBase(object):
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, '
                           'like Gecko) Chrome/79.0.3945.117 Safari/537.36'
         }
-
-        self.merge_fields = [
-            # 'ID',
-            'PubDatetime',    # 对应于网站的发布时间 pub_date
-            'MedName',  # 资讯来源，网站名称，类似于 "巨潮快讯"、"财联社" 等 ...
-            'Title',  # 文章标题，对应于分表中的 title
-            'Website',  # 网址，对应于分表中的 link
-            'OrgTableCode',  # 资讯原始来源代码 在 https://shimo.im/sheet/GhgYXDg3xJRWY6G8/s3E4K 中找对应
-            'OrgMedName',  # 资讯原始来源
-            'Abstract',  # 摘要，可为空
-            'Content',   # 资讯文章正文
-            'SecuCode',    # 相关股票代码
-            'SecuAbbr',   # 相关股票简称
-            'InnerType',  # 内部资讯类别
-            'KeyWords',  # 文章关键词
-            'DupField',  # 去重标志字段
-            # 'CreateTime',  # 创建时间
-            # 'UpdateTime',   # 更新时间
-        ]
-        self.merge_table = 'OriginSpiderAll'
+        self.history_table_name = 'juchao_ant'
+        self.tool_table_name = 'juchao_codemap'
 
     # 数据库连接初始化
     def _dc_init(self):

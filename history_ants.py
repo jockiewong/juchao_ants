@@ -1,5 +1,6 @@
 import datetime
 import json
+import sys
 import time
 
 import requests
@@ -15,7 +16,6 @@ class JuChaoSearch(SpiderBase):
         """
         super(JuChaoSearch, self).__init__()
         self.stock_string = stock_string
-        self.table_name = 'juchao_ant'
         self.fields = ['SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc']
         self.headers = {
             'Accept': '*/*',
@@ -50,7 +50,7 @@ class JuChaoSearch(SpiderBase):
           KEY `ant_time` (`AntTime`),
           KEY `update_time` (`UPDATETIMEJZ`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巨潮个股公告关联';  
-        '''.format(self.table_name)
+        '''.format(self.history_table_name)
         self._spider_init()
         self.spider_client.insert(sql)
         self.spider_client.end()
@@ -85,7 +85,15 @@ class JuChaoSearch(SpiderBase):
             resp = requests.post(self.api, headers=self.headers, data=post_data)
             if resp.status_code == 200:
                 text = resp.text
+                print(text)
                 py_datas = json.loads(text)
+                web_count = py_datas.get("totalAnnouncement")
+                exist_count = self.get_exist_count()
+                print("web", web_count)
+                print("exist", exist_count)
+                if web_count == exist_count:
+                    print("当前证券历史已导入")
+                    return
                 ants = py_datas.get("announcements")
                 if ants is None:
                     return
@@ -98,9 +106,21 @@ class JuChaoSearch(SpiderBase):
                     time_stamp = ant.get("announcementTime") / 1000
                     item.update({'AntTime': datetime.datetime.fromtimestamp(time_stamp)})
                     item.update({'AntDoc': 'http://static.cninfo.com.cn/' + ant.get("adjunctUrl")})
-                    self._save(self.spider_client, item, self.table_name, self.fields)
+                    self._save(self.spider_client, item, self.history_table_name, self.fields)
             else:
                 print(resp)
+
+    def get_exist_count(self):
+        """
+        检验网站个数与入库个数是否一致
+        :return:
+        """
+        code = self.stock_string.split(",")[0]
+        self._spider_init()
+        sql = '''select count(*) as count from {} where SecuCode = {}; '''.format(self.history_table_name, code)
+        ret = self.spider_client.select_one(sql)
+        count = ret.get("count")
+        return count
 
     def start(self):
         self.create_history_table()

@@ -5,7 +5,6 @@ from history_ants import JuChaoSearch
 class AntSpider(SpiderBase):
     def __init__(self):
         super(AntSpider, self).__init__()
-        self.tool_table_name = 'juchao_codemap'
         pass
 
     def start(self):

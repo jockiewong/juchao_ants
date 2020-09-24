@@ -10,7 +10,6 @@ class JuChaoCodeMap(SpiderBase):
     def __init__(self):
         super(JuChaoCodeMap, self).__init__()
         self.fields = ['code', 'orgId', 'category', 'pinyin', 'zwjc']
-        self.tool_table_name = 'juchao_codemap'
 
     def create_tools_table(self):
         sql = '''
