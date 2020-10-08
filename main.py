@@ -13,7 +13,7 @@ class AntSpider(SpiderBase):
 
         self._spider_init()
         # sql = '''select code, orgId from {} order by rand() ; '''.format(self.tool_table_name)
-        sql = '''select id, code, orgId from {} order by id; '''.format(self.tool_table_name)
+        sql = '''select id, code, orgId from {} where id > 225 order by id; '''.format(self.tool_table_name)
         ret = self.spider_client.select_all(sql)
         for r in ret:
             order_id, code, org_id = r.get('id'), r.get("code"), r.get("orgId")
@@ -36,4 +36,9 @@ docker push registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1
 sudo docker pull registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1 
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name ant --env LOCAL=0 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1
+'''
+
+'''
+225 
+
 '''

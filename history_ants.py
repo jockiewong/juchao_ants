@@ -127,4 +127,5 @@ class JuChaoSearch(SpiderBase):
 
 if __name__ == '__main__':
     JuChaoSearch("002080,9900001282").start()
+    # JuChaoSearch("000671,gssz0000671").start()
     pass
