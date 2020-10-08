@@ -1,9 +1,7 @@
 import datetime
 import json
-import sys
-import time
-
 import requests
+from retrying import retry
 
 from base_spider import SpiderBase
 
@@ -55,6 +53,7 @@ class JuChaoSearch(SpiderBase):
         self.spider_client.insert(sql)
         self.spider_client.end()
 
+    @retry(stop_max_attempt_number=30)
     def query_history(self, start_date=None):
         if start_date is None:
             start_date = "2000-01-01"
@@ -62,8 +61,6 @@ class JuChaoSearch(SpiderBase):
         se_date = "{}~{}".format(start_date, end_date)
         print(se_date)
         for page in range(1000):
-            time.sleep(1)
-            print()
             print()
             print()
             post_data = {
@@ -94,6 +91,7 @@ class JuChaoSearch(SpiderBase):
                 if web_count == exist_count or (web_count - exist_count < 10):
                     print("当前证券历史已导入")
                     return
+
                 ants = py_datas.get("announcements")
                 if ants is None:
                     return
@@ -123,7 +121,7 @@ class JuChaoSearch(SpiderBase):
         return count
 
     def start(self):
-        self.create_history_table()
+        # self.create_history_table()
         self.query_history()
 
 
