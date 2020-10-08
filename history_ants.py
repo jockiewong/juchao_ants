@@ -56,13 +56,13 @@ class JuChaoSearch(SpiderBase):
     @retry(stop_max_attempt_number=30)
     def query_history(self, start_date=None):
         if start_date is None:
-            start_date = "2000-01-01"
-        end_date = datetime.datetime.today().strftime("%Y-%m-%d")
-        se_date = "{}~{}".format(start_date, end_date)
+            start_date = datetime.datetime.today() - datetime.timedelta(days=10)
+
+        end_date = datetime.datetime.today()
+        se_date = "{}~{}".format(start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
         print(se_date)
-        for page in range(1000):
-            print()
-            print()
+
+        for page in range(10):
             post_data = {
                 'pageNum': page,
                 'pageSize': 30,
@@ -82,19 +82,11 @@ class JuChaoSearch(SpiderBase):
             resp = requests.post(self.api, headers=self.headers, data=post_data, timeout=3)
             if resp.status_code == 200:
                 text = resp.text
-                print(text)
                 py_datas = json.loads(text)
-                web_count = py_datas.get("totalAnnouncement")
-                exist_count = self.get_exist_count()
-                print("web", web_count)
-                print("exist", exist_count)
-                if web_count == exist_count or (web_count - exist_count < 10):
-                    print("当前证券历史已导入")
-                    return
-
                 ants = py_datas.get("announcements")
                 if ants is None:
-                    return
+                    break
+
                 for ant in ants:
                     item = dict()
                     item['SecuCode'] = ant.get('secCode')
@@ -122,6 +114,7 @@ class JuChaoSearch(SpiderBase):
 
     def start(self):
         # self.create_history_table()
+        self._spider_init()
         self.query_history()
 
 
