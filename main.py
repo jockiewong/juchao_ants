@@ -13,11 +13,11 @@ class AntSpider(SpiderBase):
 
         self._spider_init()
         # sql = '''select code, orgId from {} order by rand() ; '''.format(self.tool_table_name)
-        sql = '''select id, code, orgId from {} order by id; '''.format(self.tool_table_name)
+        sql = '''select id, code, orgId from {} where id > 5197 order by id; '''.format(self.tool_table_name)
         ret = self.spider_client.select_all(sql)
         for r in ret:
             order_id, code, org_id = r.get('id'), r.get("code"), r.get("orgId")
-            if code in ('000671', ):
+            if code in ('000671', '002183', '600340', ):
                 continue
 
             code_str = "{},{}".format(code, org_id)
