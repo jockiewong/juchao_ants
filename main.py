@@ -1,3 +1,6 @@
+import time
+import schedule
+
 from base_spider import SpiderBase
 from history_ants import JuChaoSearch
 from scripts.generate_juchao_codemap import JuChaoCodeMap
@@ -30,7 +33,13 @@ class AntSpider(SpiderBase):
 
 
 if __name__ == '__main__':
-    AntSpider().start()
+    # AntSpider().start()
+
+    schedule.every(20).minutes.do(AntSpider().start)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
 
 
 '''
