@@ -18,10 +18,9 @@ org_tablecode_map = {
 }
 
 
-class JuchaoDayNews(SpiderBase):
-    """巨潮快讯爬虫"""
+class SingleJuchaoDayNews(SpiderBase):
     def __init__(self):
-        super(JuchaoDayNews, self).__init__()
+        super(SingleJuchaoDayNews, self).__init__()
         self.web_url = 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-13'
         self.api_url = 'http://www.cninfo.com.cn/new/quickNews/queryQuickNews?queryDate={}&type='
         self.headers = {
@@ -137,7 +136,3 @@ class JuchaoDayNews(SpiderBase):
                         print()
                     self._batch_save(self.spider_client, items, self.table_name, self.fields)
             _day += datetime.timedelta(days=1)
-
-
-if __name__ == '__main__':
-    JuchaoDayNews().start()

@@ -18,9 +18,9 @@ org_tablecode_map = {
 }
 
 
-class JuchaoDayNews(SpiderBase):
+class MergeJuchaoDayNews(SpiderBase):
     def __init__(self):
-        super(JuchaoDayNews, self).__init__()
+        super(MergeJuchaoDayNews, self).__init__()
         self.web_url = 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-13'
         self.api_url = 'http://www.cninfo.com.cn/new/quickNews/queryQuickNews?queryDate={}&type='
         self.headers = {
@@ -77,7 +77,3 @@ class JuchaoDayNews(SpiderBase):
                         self._save(self.spider_client, item, self.merge_table, self.merge_fields)
             _day += datetime.timedelta(days=1)
             time.sleep(2)
-
-
-if __name__ == '__main__':
-    JuchaoDayNews().run()
