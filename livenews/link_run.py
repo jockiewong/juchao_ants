@@ -20,14 +20,12 @@ def if_final_link(link: str):
 
 
 def link_null(record, dt):
-
     record = {'obRecid3907': 40446434, 'textId': 1207948410, 'classifiedId': '030402', 'code': '',
               'pageUrl': 'finalpage/2020-06-22/cninfo1207948410.js', 'title': '深市上市公司网络投票特别提示', 'fileType': 'TXT',
               'announcementTime': 1592786974000, 'entryTime': 1592786974000, 'pagePath': None, 'top': False, 'type': '通知'}
     # http://www.cninfo.com.cn/new/disclosure/detail?stock=&announcementId=1207948410&announcementTime=2020-06-22
     base_url = '''http://www.cninfo.com.cn/new/disclosure/detail?stock=&announcementId={}&announcementTime={}'''.format(record.get("textId"), dt)
 
-    pass
 
 def main():
     link1 = 'http://static.cninfo.com.cn/finalpage/2020-06-09/1207905896.PDF'

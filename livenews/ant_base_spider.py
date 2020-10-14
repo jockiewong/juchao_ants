@@ -20,3 +20,12 @@ CREATE TABLE `announcement_base` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告基础表';
 
 '''
+
+
+class BaseJuchao(object):
+
+    def __init__(self):
+        pass
+
+
+    pass

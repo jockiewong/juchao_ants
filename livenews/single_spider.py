@@ -3,7 +3,6 @@ import json
 import os
 import sys
 import time
-
 import requests
 from retrying import retry
 
@@ -23,13 +22,9 @@ class JuchaoDayNews(SpiderBase):
     """巨潮快讯爬虫"""
     def __init__(self):
         super(JuchaoDayNews, self).__init__()
-        # 网页链接:
-        # self.web_url = 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-13'
+        self.web_url = 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-13'
         self.api_url = 'http://www.cninfo.com.cn/new/quickNews/queryQuickNews?queryDate={}&type='
         self.headers = {
-            # 'Host': 'www.cninfo.com.cn',
-            # 'Referer': 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-14',
-            # 'Cookie': 'JSESSIONID=1D4A040A6D5326C992FAD7DD8FFD946A; _sp_ses.2141=*; UC-JSESSIONID=DD0F58092C1828107B9921E3436A935B; _sp_id.2141=a878da76-08ce-42a8-9c5b-7e4ec1df3721.1597628172.1.1597630509.1597628172.58921c96-de2a-4c69-b2be-b1b2a79635c3',
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36',
         }
 
@@ -92,8 +87,9 @@ class JuchaoDayNews(SpiderBase):
     def start(self):
         self._create_table()
         end_day = datetime.datetime.combine(datetime.datetime.now(), datetime.time.min)
-        # start_day = datetime.datetime(2020, 6, 1)    # 历史(貌似是只有最近半年的)
-        start_day = datetime.datetime(2020, 8, 25)    # 历史(貌似是只有最近半年的)
+        # 历史(貌似是只有最近半年的)
+        # start_day = datetime.datetime(2020, 6, 1)
+        start_day = datetime.datetime(2020, 8, 25)
         # start_day = end_day    # 定时增量
 
         _day = start_day
@@ -140,7 +136,6 @@ class JuchaoDayNews(SpiderBase):
                         items.append(item)
                         print()
                     self._batch_save(self.spider_client, items, self.table_name, self.fields)
-                    # sys.exit(0)
             _day += datetime.timedelta(days=1)
 
 
