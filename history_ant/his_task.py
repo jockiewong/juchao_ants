@@ -137,7 +137,7 @@ if __name__ == '__main__':
     AntSpider().ding_inc_count()
 
     # schedule.every(20).minutes.do(AntSpider().start)
-    schedule.every(20).minutes.do(LaunchSpider().launch)
+    schedule.every(10).minutes.do(LaunchSpider().launch)
     schedule.every(5).hours.do(AntSpider().ding_inc_count)
 
     while True:

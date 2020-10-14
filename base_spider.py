@@ -20,7 +20,7 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      SPIDER_MYSQL_DB, PRODUCT_MYSQL_HOST, PRODUCT_MYSQL_PORT, PRODUCT_MYSQL_USER,
                      PRODUCT_MYSQL_PASSWORD, PRODUCT_MYSQL_DB, JUY_HOST, JUY_PORT, JUY_USER, JUY_PASSWD,
                      JUY_DB, DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, SECRET, TOKEN, LOCAL, LOCAL_PROXY_URL,
-                     PROXY_URL)
+                     PROXY_URL, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB)
 from sql_pool import PyMysqlPoolBase
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -60,12 +60,21 @@ class SpiderBase(object):
         "password": DC_PASSWD,
         "db": DC_DB,
     }
+    
+    tonglian_cfg = {  
+        "host": TL_HOST,
+        "port": TL_PORT,
+        "user": TL_USER,
+        "password": TL_PASSWD,
+        "db": TL_DB,
+    }
 
     def __init__(self):
         self.dc_client = None
         self.product_client = None
         self.juyuan_client = None
         self.spider_client = None
+        self.tonglian_client = None
 
         self.proxy_pool = []
         self.cur_proxy = None
@@ -93,6 +102,10 @@ class SpiderBase(object):
     def _spider_init(self):
         if not self.spider_client:
             self.spider_client = self._init_pool(self.spider_cfg)
+            
+    def _tonglian_init(self):
+        if not self.tonglian_client: 
+            self.tonglian_client = self._init_pool(self.tonglian_cfg)
 
     def __del__(self):
         """结束时销毁已经存在的数据库连接"""

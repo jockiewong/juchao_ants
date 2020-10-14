@@ -52,6 +52,13 @@ else:
     SPIDER_MYSQL_PASSWORD = env.get("SPIDER_MYSQL_PASSWORD", cf.get('spider', 'SPIDER_MYSQL_PASSWORD'))
     SPIDER_MYSQL_DB = env.get("SPIDER_MYSQL_DB", cf.get('spider', 'SPIDER_MYSQL_DB'))
 
+# 通联
+TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
+TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
+TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
+TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+
 
 # product
 if LOCAL:
