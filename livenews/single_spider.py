@@ -87,8 +87,8 @@ class SingleJuchaoDayNews(SpiderBase):
         self._create_table()
         end_day = datetime.datetime.combine(datetime.datetime.now(), datetime.time.min)
         # 历史(貌似是只有最近半年的)
-        start_day = datetime.datetime(2020, 6, 1)
-        # start_day = end_day    # 定时增量
+        # start_day = datetime.datetime(2020, 6, 1)
+        start_day = end_day    # 定时增量
 
         _day = start_day
         while _day <= end_day:

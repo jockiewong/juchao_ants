@@ -8,7 +8,7 @@ cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
 
-from livenews.merge_spider import MergeJuchaoDayNews
+# from livenews.merge_spider import MergeJuchaoDayNews
 from livenews.single_spider import SingleJuchaoDayNews
 
 
@@ -18,13 +18,13 @@ def task():
 
 
 def main():
-
     task()
-    # schedule.every(30).seconds.do(task)
-    #
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(10)
+
+    schedule.every(30).seconds.do(task)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
 
 
 if __name__ == '__main__':
