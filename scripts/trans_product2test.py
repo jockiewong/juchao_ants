@@ -24,11 +24,13 @@ class DataTranser(SpiderBase):
         self._test_init()
         end_time = datetime.datetime.now()
         start_time = end_time - datetime.timedelta(minutes=10)
+        # start_time = end_time - datetime.timedelta(days=1)
 
         # ant
         sql = '''select * from juchao_ant where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}';'''.format(start_time, end_time)
         print("sql: ", sql)
         datas = self.spider_client.select_all(sql)
+        print("select count: ", len(datas))
         if len(datas) != 0:
             save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
                              ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
@@ -42,6 +44,7 @@ class DataTranser(SpiderBase):
         sql2 = '''select * from juchao_kuaixun where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}'; '''.format(start_time, end_time)
         print("sql2: ", sql2)
         datas = self.spider_client.select_all(sql2)
+        print("select count: ", len(datas))
         if len(datas) != 0:
             save_count = self._batch_save(self.test_client, datas, 'juchao_kuaixun',
                                           ['id', 'code', 'name', 'pub_date', 'title', 'type', 'link'])
@@ -53,6 +56,7 @@ class DataTranser(SpiderBase):
         self._spider_init()
         self._test_init()
 
+        # ant
         # csql = '''
         #     CREATE TABLE IF NOT EXISTS `juchao_ant` (
         #       `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -73,17 +77,18 @@ class DataTranser(SpiderBase):
         # '''
         # self.test_client.insert(csql)
 
-        for start in range(5000):
-            sql = '''select * from juchao_ant limit {}, {};'''.format(start*self.batch_number, self.batch_number)
-            print("sql: ", sql)
-            datas = self.spider_client.select_all(sql)
-            print('select count: ', len(datas))
-            if len(datas) == 0:
-                break
-            save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
-                                          ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
-            print("save count:", save_count)
+        # for start in range(5000):
+        #     sql = '''select * from juchao_ant limit {}, {};'''.format(start*self.batch_number, self.batch_number)
+        #     print("sql: ", sql)
+        #     datas = self.spider_client.select_all(sql)
+        #     print('select count: ', len(datas))
+        #     if len(datas) == 0:
+        #         break
+        #     save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
+        #                                   ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
+        #     print("save count:", save_count)
 
+        # kuaixun
         # csql = '''
         # CREATE TABLE IF NOT EXISTS `juchao_kuaixun` (
         #   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -115,7 +120,9 @@ class DataTranser(SpiderBase):
             print("save count: ", save_count)
 
     def start(self):
-        self.load()
+        # self.load()
+
+        self.tracking()
 
 
 def task():
@@ -123,7 +130,11 @@ def task():
 
 
 if __name__ == '__main__':
+
+    task()
+
     schedule.every(3).minutes.do(task)
+
     while True:
         schedule.run_pending()
         time.sleep(10)
@@ -133,6 +144,7 @@ if __name__ == '__main__':
 docker build -f Dockerfile_load -t registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_load:v1 .
 docker push registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_load:v1 
 sudo docker pull registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_load:v1 
+
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name load --env LOCAL=0 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_load:v1
 '''
