@@ -1,6 +1,9 @@
+import datetime
 import os
 import sys
 import time
+
+import schedule
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
@@ -14,6 +17,22 @@ class DataTranser(SpiderBase):
     def __init__(self):
         super(DataTranser, self).__init__()
         self.batch_number = 1000
+
+    def tracking(self):
+        """实时追踪 并保持两个数据库一致 """
+        self._spider_init()
+        self._test_init()
+
+        end_time = datetime.datetime.now()
+        start_time = end_time - datetime.timedelta(minutes=10)
+
+        sql = '''select count(*)  from juchao_ant where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}';'''.format(
+            start_time, end_time)
+        print("sql: ", sql)
+        datas = self.spider_client.select_all(sql)
+        save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
+                         ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
+        print("save count:", save_count)
 
     def start(self):
         self._spider_init()
@@ -48,8 +67,15 @@ class DataTranser(SpiderBase):
             print("save count:", save_count)
 
 
-if __name__ == '__main__':
+def task():
     DataTranser().start()
+
+
+if __name__ == '__main__':
+    schedule.every(3).minutes.do(task)
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
 
 
 '''cd ../ 
