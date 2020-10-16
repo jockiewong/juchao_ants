@@ -20,7 +20,8 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      SPIDER_MYSQL_DB, PRODUCT_MYSQL_HOST, PRODUCT_MYSQL_PORT, PRODUCT_MYSQL_USER,
                      PRODUCT_MYSQL_PASSWORD, PRODUCT_MYSQL_DB, JUY_HOST, JUY_PORT, JUY_USER, JUY_PASSWD,
                      JUY_DB, DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, SECRET, TOKEN, LOCAL, LOCAL_PROXY_URL,
-                     PROXY_URL, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB)
+                     PROXY_URL, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB, TEST_MYSQL_HOST, TEST_MYSQL_PORT,
+                     TEST_MYSQL_USER, TEST_MYSQL_PASSWORD, TEST_MYSQL_DB)
 from sql_pool import PyMysqlPoolBase
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -28,6 +29,15 @@ logger = logging.getLogger(__name__)
 
 
 class SpiderBase(object):
+    # 测试数据库配置
+    test_cfg = {
+        "host": TEST_MYSQL_HOST,
+        "port": TEST_MYSQL_PORT,
+        "user": TEST_MYSQL_USER,
+        "password": TEST_MYSQL_PASSWORD,
+        "db": TEST_MYSQL_DB,
+    }
+
     # 数据库基本配置
     spider_cfg = {  # 爬虫库
         "host": SPIDER_MYSQL_HOST,
@@ -70,6 +80,7 @@ class SpiderBase(object):
     }
 
     def __init__(self):
+        self.test_client = None
         self.dc_client = None
         self.product_client = None
         self.juyuan_client = None
@@ -87,6 +98,10 @@ class SpiderBase(object):
         self.tool_table_name = 'juchao_codemap'
 
     # 数据库连接初始化
+    def _test_init(self):
+        if not self.test_client:
+            self.test_client = self._init_pool(self.test_cfg)
+
     def _dc_init(self):
         if not self.dc_client:
             self.dc_client = self._init_pool(self.dc_cfg)
