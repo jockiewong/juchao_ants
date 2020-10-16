@@ -62,8 +62,21 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
                 print("no more datas")
                 break
 
+    def load_his_live(self):
+        self._test_init()
+        sql = '''select A.* from juchao_kuaixun A, juchao_ant B where A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''
+        datas = self.test_client.select_all(sql)
+        print("查询出 link 相同的数据个数是 : ", len(datas))
+
+
+
+
+        pass
+
     def start(self):
-        self.load_his_ants()
+        # self.load_his_ants()
+
+        self.load_his_live()
 
 
 if __name__ == '__main__':
