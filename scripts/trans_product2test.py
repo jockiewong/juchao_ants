@@ -25,15 +25,31 @@ class DataTranser(SpiderBase):
         end_time = datetime.datetime.now()
         start_time = end_time - datetime.timedelta(minutes=10)
 
-        sql = '''select count(*)  from juchao_ant where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}';'''.format(
-            start_time, end_time)
+        # ant
+        sql = '''select * from juchao_ant where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}';'''.format(start_time, end_time)
         print("sql: ", sql)
         datas = self.spider_client.select_all(sql)
-        save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
-                         ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
-        print("save count:", save_count)
+        if len(datas) != 0:
+            save_count = self._batch_save(self.test_client, datas, 'juchao_ant',
+                             ['id',  'SecuCode', 'SecuAbbr', 'AntId', 'AntTime', 'AntTitle', 'AntDoc'])
+            print("ant save count:", save_count)
+        else:
+            print("ant inc 0")
 
-    def start(self):
+        print()
+
+        # kuaixun
+        sql2 = '''select * from juchao_kuaixun where UPDATETIMEJZ > '{}' and UPDATETIMEJZ < '{}'; '''.format(start_time, end_time)
+        print("sql2: ", sql2)
+        datas = self.spider_client.select_all(sql2)
+        if len(datas) != 0:
+            save_count = self._batch_save(self.test_client, datas, 'juchao_kuaixun',
+                                          ['id', 'code', 'name', 'pub_date', 'title', 'type', 'link'])
+            print("kuaixun save count:", save_count)
+        else:
+            print("kuaixun inc 0")
+
+    def load(self):
         self._spider_init()
         self._test_init()
 
@@ -97,6 +113,9 @@ class DataTranser(SpiderBase):
             save_count = self._batch_save(self.test_client, datas, 'juchao_kuaixun',
                                           ['id', 'code', 'name', 'pub_date', 'title', 'type', 'link'])
             print("save count: ", save_count)
+
+    def start(self):
+        self.load()
 
 
 def task():
