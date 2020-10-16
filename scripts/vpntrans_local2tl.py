@@ -12,20 +12,7 @@ class MergeBase(SpiderBase):
     def __init__(self):
         super(MergeBase, self).__init__()
         self.merge_table_name = 'announcement_base'
-
-    def load_his_ants(self):
-        self._spider_init()
-        self._tonglian_init()
-        for start in range(0, int(13308349/100) + 2):
-            load_sql = '''select id, SecuCode, SecuAbbr, \
-AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, CREATETIMEJZ as InsertDatetime1 \
-from juchao_ant limit {}, 100; '''.format(start * 100)
-            print(load_sql)
-            datas = self.spider_client.select_all(load_sql)
-            count = self._batch_save(
-                self.tonglian_client, datas, self.merge_table_name,
-                ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
-            print(count)
+        self.batch_number = 1000
 
     def show_merge_table(self):
         self._tonglian_init()
@@ -52,15 +39,37 @@ from juchao_ant limit {}, 100; '''.format(start * 100)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告基础表'
         '''
 
+    def load_his_ants(self):
+        self._test_init()
+        self._tonglian_init()
+
+        for start in range(0, 5000):
+            print()
+            print()
+            print("start: ", start)
+            load_sql = '''select id, SecuCode, SecuAbbr, \
+AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, CREATETIMEJZ as InsertDatetime1 \
+from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_number)
+            print("sql is: ", load_sql)
+            datas = self.test_client.select_all(load_sql)
+            print("select count: ", len(datas))
+            if len(datas) != 0:
+                save_count = self._batch_save(
+                    self.tonglian_client, datas, self.merge_table_name,
+                    ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
+                print("save count: ", save_count)
+            else:
+                print("no more datas")
+                break
+
     def start(self):
-
-
-        pass
+        self.load_his_ants()
 
 
 if __name__ == '__main__':
-    # MergeBase().show_merge_table()
-    MergeBase().load_his_ants()
+    MergeBase().start()
+
+    pass
 
 
 '''
