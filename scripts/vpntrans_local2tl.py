@@ -163,5 +163,5 @@ docker build -f Dockerfile_merge -t registry.cn-shenzhen.aliyuncs.com/jzdev/jzda
 docker push registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_merge:v1 
 sudo docker pull registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_merge:v1 
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
--itd --name ant_merge --env LOCAL=0 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_merge:v1
+-itd --name ant_merge --env LOCAL=1  registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_merge:v1
 '''
