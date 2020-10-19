@@ -52,6 +52,14 @@ else:
     SPIDER_MYSQL_PASSWORD = env.get("SPIDER_MYSQL_PASSWORD", cf.get('spider', 'SPIDER_MYSQL_PASSWORD'))
     SPIDER_MYSQL_DB = env.get("SPIDER_MYSQL_DB", cf.get('spider', 'SPIDER_MYSQL_DB'))
 
+# spider2
+SPIDER_MYSQL_HOST2 = env.get("SPIDER_MYSQL_HOST2", cf.get('spider2', 'SPIDER_MYSQL_HOST2'))
+SPIDER_MYSQL_PORT2 = int(env.get("SPIDER_MYSQL_PORT2", cf.get('spider2', 'SPIDER_MYSQL_PORT2')))
+SPIDER_MYSQL_USER2 = env.get("SPIDER_MYSQL_USER2", cf.get('spider2', 'SPIDER_MYSQL_USER2'))
+SPIDER_MYSQL_PASSWORD2 = env.get("SPIDER_MYSQL_PASSWORD2", cf.get('spider2', 'SPIDER_MYSQL_PASSWORD2'))
+SPIDER_MYSQL_DB2 = env.get("SPIDER_MYSQL_DB2", cf.get('spider2', 'SPIDER_MYSQL_DB2'))
+
+
 # 通联
 TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
 TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
