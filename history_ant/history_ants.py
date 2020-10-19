@@ -117,9 +117,3 @@ class JuChaoSearch(SpiderBase):
         # self.create_history_table()
         self._spider_init()
         self.query_history()
-
-
-if __name__ == '__main__':
-    JuChaoSearch("002080,9900001282").start()
-    # JuChaoSearch("000671,gssz0000671").start()
-    pass

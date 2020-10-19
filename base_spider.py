@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class SpiderBase(object):
-    # 测试数据库配置
+    # 测试数据库
     test_cfg = {
         "host": TEST_MYSQL_HOST,
         "port": TEST_MYSQL_PORT,
@@ -39,8 +39,8 @@ class SpiderBase(object):
         "db": TEST_MYSQL_DB,
     }
 
-    # 数据库基本配置
-    spider_cfg = {  # 爬虫库
+    # 读写爬虫库（白名单）
+    spider_cfg = {
         "host": SPIDER_MYSQL_HOST,
         "port": SPIDER_MYSQL_PORT,
         "user": SPIDER_MYSQL_USER,
@@ -48,7 +48,8 @@ class SpiderBase(object):
         "db": SPIDER_MYSQL_DB,
     }
 
-    spider_cfg2 = {  # 爬虫库
+    # 只读爬虫库
+    spider_cfg2 = {
         "host": SPIDER_MYSQL_HOST2,
         "port": SPIDER_MYSQL_PORT2,
         "user": SPIDER_MYSQL_USER2,
@@ -56,7 +57,8 @@ class SpiderBase(object):
         "db": SPIDER_MYSQL_DB2,
     }
 
-    product_cfg = {  # 正式库
+    # datacenter 读写库
+    product_cfg = {
         "host": PRODUCT_MYSQL_HOST,
         "port": PRODUCT_MYSQL_PORT,
         "user": PRODUCT_MYSQL_USER,
@@ -64,7 +66,8 @@ class SpiderBase(object):
         "db": PRODUCT_MYSQL_DB,
     }
 
-    juyuan_cfg = {  # 聚源数据库
+    # 聚源数据库
+    juyuan_cfg = {
         "host": JUY_HOST,
         "port": JUY_PORT,
         "user": JUY_USER,
@@ -72,14 +75,16 @@ class SpiderBase(object):
         "db": JUY_DB,
     }
 
-    dc_cfg = {  # 数据中心库
+    # datacenter 只读库
+    dc_cfg = {
         "host": DC_HOST,
         "port": DC_PORT,
         "user": DC_USER,
         "password": DC_PASSWD,
         "db": DC_DB,
     }
-    
+
+    # 通联测试库
     tonglian_cfg = {  
         "host": TL_HOST,
         "port": TL_PORT,
@@ -99,15 +104,16 @@ class SpiderBase(object):
 
         self.proxy_pool = []
         self.cur_proxy = None
-        # 请求头
+
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_2) AppleWebKit/537.36 (KHTML, '
                           'like Gecko) Chrome/79.0.3945.117 Safari/537.36'
         }
-        self.history_table_name = 'juchao_ant'
-        self.tool_table_name = 'juchao_codemap'
+        self.history_table_name = 'juchao_ant'       # 历史公告表
+        self.tool_table_name = 'juchao_codemap'      # 巨潮编码对应表
+        self.merge_table_name = 'announcement_base'  # 合表
 
-    # 数据库连接初始化
+    # 数据库初始化连接
     def _test_init(self):
         if not self.test_client:
             self.test_client = self._init_pool(self.test_cfg)
