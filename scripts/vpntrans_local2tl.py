@@ -64,14 +64,28 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
 
     def load_his_live(self):
         self._test_init()
+        self._tonglian_init()
+
         sql = '''select A.* from juchao_kuaixun A, juchao_ant B where A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''
         datas = self.test_client.select_all(sql)
         print("查询出 link 相同的数据个数是 : ", len(datas))
 
-
-
-
-        pass
+        for data in datas:
+            print()
+            print()
+            print(data)
+            sql = '''update {} set PubDatetime2 = '{}', InsertDatetime2 = '{}', Title2 = '{}' where PDFLink = '{}'; '''.format(
+                self.merge_table_name, data.get("pub_date"), data.get("CREATETIMEJZ"), data.get("title"), data.get("link")
+            )
+            print(sql)
+            count = self.tonglian_client.insert(sql)
+            if count == 1:
+                print("插入新数据 {}".format(data))
+            elif count == 0:
+                print("已有数据 {} ".format(data))
+            else:
+                print("count is {}".format(count))
+            self.tonglian_client.end()
 
     def start(self):
         # self.load_his_ants()
