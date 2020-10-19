@@ -1,6 +1,9 @@
 import datetime
 import os
 import sys
+import time
+
+import schedule
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
@@ -137,10 +140,21 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
         self.load_inc()
 
 
-if __name__ == '__main__':
+def task():
     MergeBase().start()
+    for i in range(5):
+        print()
 
-    pass
+
+if __name__ == '__main__':
+    task()
+
+    schedule.every(2).minutes.do(task)
+
+    while True:
+        schedule.run_pending()
+
+        time.sleep(5)
 
 
 '''
