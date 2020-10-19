@@ -98,8 +98,13 @@ CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.f
         print("sql is: ", load_sql)
         datas = self.r_spider_client.select_all(load_sql)
         print(len(datas))
-        # for data in datas:
-        #     print(data)
+        if len(datas) != 0:
+            save_count = self._batch_save(
+                self.tonglian_client, datas, self.merge_table_name,
+                ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
+            print("save count: ", save_count)
+        else:
+            print("no selected datas")
 
     def start(self):
         # self.load_his_ants()
