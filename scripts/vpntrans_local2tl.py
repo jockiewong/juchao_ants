@@ -91,26 +91,20 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
     def load_inc(self):
         self._spider2_init()
         self._tonglian_init()
-        deadline = datetime.datetime.now() - datetime.timedelta(days=10)
+        deadline = datetime.datetime.now() - datetime.timedelta(days=2)
 
-#         load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
-# CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
-#         print("sql is: ", load_sql)
-#         datas = self.r_spider_client.select_all(load_sql)
-#         print(len(datas))
-#         if len(datas) != 0:
-#             save_count = self._batch_save(
-#                 self.tonglian_client, datas, self.merge_table_name,
-#                 ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
-#             print("save count: ", save_count)
-#         else:
-#             print("no selected datas")
-
-        # test_sql = '''select * from juchao_kuaixun where UPDATETIMEJZ > '2020-10-19'; '''
-        # test_datas = self.r_spider_client.select_all(test_sql)
-        # print(len(test_datas))
-        # for data in test_datas:
-        #     print(data)
+        load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
+CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
+        print("sql is: ", load_sql)
+        datas = self.r_spider_client.select_all(load_sql)
+        print(len(datas))
+        if len(datas) != 0:
+            save_count = self._batch_save(
+                self.tonglian_client, datas, self.merge_table_name,
+                ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
+            print("save count: ", save_count)
+        else:
+            print("no selected datas")
 
         update_sql = '''select A.* from juchao_kuaixun A, juchao_ant B where A.pub_date > '{}' \
 and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format(deadline)
@@ -141,8 +135,6 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
         # self.load_his_live()
 
         self.load_inc()
-
-        pass
 
 
 if __name__ == '__main__':
