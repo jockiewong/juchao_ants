@@ -89,17 +89,17 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
             self.tonglian_client.end()
 
     def load_inc(self):
-        self._test_init()
+        self._spider2_init()
         self._tonglian_init()
 
         deadline = datetime.datetime.now() - datetime.timedelta(days=1)
         load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
 CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
         print("sql is: ", load_sql)
-        datas = self.test_client.select_all(load_sql)
+        datas = self.r_spider_client.select_all(load_sql)
         print(len(datas))
-        for data in datas:
-            print(data)
+        # for data in datas:
+        #     print(data)
 
     def start(self):
         # self.load_his_ants()
