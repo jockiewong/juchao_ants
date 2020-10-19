@@ -21,7 +21,8 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      PRODUCT_MYSQL_PASSWORD, PRODUCT_MYSQL_DB, JUY_HOST, JUY_PORT, JUY_USER, JUY_PASSWD,
                      JUY_DB, DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, SECRET, TOKEN, LOCAL, LOCAL_PROXY_URL,
                      PROXY_URL, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB, TEST_MYSQL_HOST, TEST_MYSQL_PORT,
-                     TEST_MYSQL_USER, TEST_MYSQL_PASSWORD, TEST_MYSQL_DB)
+                     TEST_MYSQL_USER, TEST_MYSQL_PASSWORD, TEST_MYSQL_DB, SPIDER_MYSQL_HOST2, SPIDER_MYSQL_PORT2,
+                     SPIDER_MYSQL_USER2, SPIDER_MYSQL_PASSWORD2, SPIDER_MYSQL_DB2)
 from sql_pool import PyMysqlPoolBase
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -45,6 +46,14 @@ class SpiderBase(object):
         "user": SPIDER_MYSQL_USER,
         "password": SPIDER_MYSQL_PASSWORD,
         "db": SPIDER_MYSQL_DB,
+    }
+
+    spider_cfg2 = {  # 爬虫库
+        "host": SPIDER_MYSQL_HOST2,
+        "port": SPIDER_MYSQL_PORT2,
+        "user": SPIDER_MYSQL_USER2,
+        "password": SPIDER_MYSQL_PASSWORD2,
+        "db": SPIDER_MYSQL_DB2,
     }
 
     product_cfg = {  # 正式库
@@ -86,6 +95,7 @@ class SpiderBase(object):
         self.juyuan_client = None
         self.spider_client = None
         self.tonglian_client = None
+        self.r_spider_client = None
 
         self.proxy_pool = []
         self.cur_proxy = None
@@ -117,6 +127,10 @@ class SpiderBase(object):
     def _spider_init(self):
         if not self.spider_client:
             self.spider_client = self._init_pool(self.spider_cfg)
+
+    def _spider2_init(self):
+        if not self.r_spider_client:
+            self.r_spider_client = self._init_pool(self.spider_cfg2)
             
     def _tonglian_init(self):
         if not self.tonglian_client: 
@@ -124,7 +138,10 @@ class SpiderBase(object):
 
     def __del__(self):
         """结束时销毁已经存在的数据库连接"""
-        for _client in (self.dc_client, self.product_client, self.juyuan_client, self.spider_client):
+        for _client in (self.dc_client, self.product_client, self.juyuan_client,
+                        self.spider_client, self.test_client, self.tonglian_client,
+                        self.r_spider_client,
+                        ):
             if _client is not None:
                 _client.dispose()
 
