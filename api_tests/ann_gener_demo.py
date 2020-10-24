@@ -12,11 +12,8 @@ class AnnGenerator(SpiderBase):
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
 
     def start(self):
-        # 主进程
         datas = self.get_origin_datas()
-        # 子进程
         items = self.post_api(datas)
-        # 主进程
         self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
 
     def get_origin_datas(self):
@@ -26,7 +23,6 @@ class AnnGenerator(SpiderBase):
         return datas
 
     def post_api(self, datas):
-
         items = []
         for data in datas:
             title = data.get("Title2")
