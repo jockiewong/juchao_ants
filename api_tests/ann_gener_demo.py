@@ -11,10 +11,10 @@ class AnnGenerator(SpiderBase):
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
-        self.batch_num = 100
+        self.batch_num = 1000
 
     def start(self):
-        start = 0
+        start = 100
         while True:
             datas = self.get_origin_datas(start)
             print("start: ", start, "len(datas): ", len(datas))
@@ -26,7 +26,7 @@ class AnnGenerator(SpiderBase):
 
     def get_origin_datas(self, start):
         self._tonglian_init()
-        sql = '''select * from announcement_base order by id limit {}, {}; '''.format(
+        sql = '''select * from announcement_base limit {}, {}; '''.format(
             start*self.batch_num, self.batch_num)
         datas = self.tonglian_client.select_all(sql)
         return datas
@@ -48,21 +48,25 @@ class AnnGenerator(SpiderBase):
             return item
 
     def post_api(self, datas):
-        items = []
+        # TODO post 接口部分优化
+        params = []
         for data in datas:
             title = data.get("Title2")
             if not title:
                 title = data.get('SecuAbbr') + data.get("Title1")
-
             req_data = {
                 'texttype': 'ann',
                 'title': title,
                 'content': title,
                 'prolist': ['event_ann'],
             }
+            params.append((req_data, data, title))
+        print(params)
+        print(len(params))
 
-            # TODO post 接口部分优化
-            item = self.post_task(req_data, data, title)
+        items = []
+        for param in params:
+            item = self.post_task(*param)
             if item:
                 items.append(item)
         return items
