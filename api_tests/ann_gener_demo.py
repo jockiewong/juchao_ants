@@ -12,13 +12,19 @@ class AnnGenerator(SpiderBase):
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
 
     def start(self):
-        datas = self.get_origin_datas()
-        items = self.post_api(datas)
-        self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
+        start = 0
+        while True:
+            datas = self.get_origin_datas(start)
+            print("len(datas): ", len(datas))
+            if len(datas) == 0:
+                break
+            items = self.post_api(datas)
+            self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
+            start += 1
 
-    def get_origin_datas(self):
+    def get_origin_datas(self, start):
         self._tonglian_init()
-        sql = '''select * from announcement_base order by id limit 200, 100; '''
+        sql = '''select * from announcement_base order by id limit {}, 100; '''.format(start*100)
         datas = self.tonglian_client.select_all(sql)
         return datas
 
