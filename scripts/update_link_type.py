@@ -1,4 +1,0 @@
-class LinkTypeUpdate(object):
-
-
-    pass
