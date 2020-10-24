@@ -1,4 +1,6 @@
 import json
+import multiprocessing
+
 import requests
 
 from base_spider import SpiderBase
@@ -11,7 +13,7 @@ class AnnGenerator(SpiderBase):
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
-        self.batch_num = 1000
+        self.batch_num = 100
 
     def start(self):
         start = 100
@@ -63,12 +65,21 @@ class AnnGenerator(SpiderBase):
             params.append((req_data, data, title))
         print(params)
         print(len(params))
-
         items = []
+
         for param in params:
             item = self.post_task(*param)
             if item:
                 items.append(item)
+
+        # mul_count = multiprocessing.cpu_count()
+        # print("mul count: ", mul_count)
+        # with multiprocessing.Pool(mul_count) as workers:
+        #     item = workers.imap_unordered(self.post_task, params)
+        #     if item:
+        #         items.append(item)
+
+        print("post resp: ", len(items))
         return items
 
     def _ret_table(self):
