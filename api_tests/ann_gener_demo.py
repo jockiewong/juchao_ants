@@ -17,7 +17,7 @@ class AnnGenerator(SpiderBase):
         start = 0
         while True:
             datas = self.get_origin_datas(start)
-            print("len(datas): ", len(datas))
+            print("start: ", start, "len(datas): ", len(datas))
             if len(datas) == 0:
                 break
             items = self.post_api(datas)
@@ -63,7 +63,8 @@ class AnnGenerator(SpiderBase):
 
             # TODO post 接口部分优化
             item = self.post_task(req_data, data, title)
-            items.append(item)
+            if item:
+                items.append(item)
         return items
 
     def _ret_table(self):
