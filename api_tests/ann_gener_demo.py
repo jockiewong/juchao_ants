@@ -8,27 +8,27 @@ from base_spider import SpiderBase
 
 class AnnGenerator(SpiderBase):
     """测试公告模型接口用"""
-    def __init__(self):
+    def __init__(self, start):
         super(AnnGenerator, self).__init__()
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
         self.batch_num = 100
+        self.start = start
 
-    def start(self):
-        start = 100
+    def launch(self):
         while True:
-            datas = self.get_origin_datas(start)
-            print("start: ", start, "len(datas): ", len(datas))
+            datas = self.get_origin_datas(self.start)
+            print("start: ", self.start, "len(datas): ", len(datas))
             if len(datas) == 0:
                 break
             items = self.post_api(datas)
             self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
-            start += 1
+            self.start += 1
 
     def get_origin_datas(self, start):
         self._tonglian_init()
-        sql = '''select * from announcement_base limit {}, {}; '''.format(
+        sql = '''select * from announcement_base order by id limit {}, {}; '''.format(
             start*self.batch_num, self.batch_num)
         datas = self.tonglian_client.select_all(sql)
         return datas
@@ -104,4 +104,4 @@ class AnnGenerator(SpiderBase):
 
 
 if __name__ == '__main__':
-    AnnGenerator().start()
+    AnnGenerator(start=0).launch()
