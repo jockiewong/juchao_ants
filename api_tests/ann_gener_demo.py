@@ -12,10 +12,22 @@ class AnnGenerator(SpiderBase):
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
 
     def start(self):
+        # 主进程
+        datas = self.get_origin_datas()
+        # 子进程
+        items = self.post_api(datas)
+        # 主进程
+        self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
+
+    def get_origin_datas(self):
         self._tonglian_init()
-        sql = '''select * from announcement_base order by id limit 100; '''
+        sql = '''select * from announcement_base order by id limit 200, 100; '''
         datas = self.tonglian_client.select_all(sql)
-        print(len(datas))
+        return datas
+
+    def post_api(self, datas):
+
+        items = []
         for data in datas:
             title = data.get("Title2")
             if not title:
@@ -39,7 +51,8 @@ class AnnGenerator(SpiderBase):
                 item['SecuCode'] = data.get('SecuCode')
                 item['EventCode'] = return_data.get("event_code")
                 item['EventName'] = return_data.get("event_name")
-                self._save(self.tonglian_client, item, self.target_table_name, self.target_fields)
+                items.append(item)
+        return items
 
     def _ret_table(self):
         sql = '''
@@ -64,5 +77,3 @@ class AnnGenerator(SpiderBase):
 
 if __name__ == '__main__':
     AnnGenerator().start()
-
-    pass
