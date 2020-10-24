@@ -5,11 +5,13 @@ from base_spider import SpiderBase
 
 
 class AnnGenerator(SpiderBase):
+    """测试公告模型接口用"""
     def __init__(self):
         super(AnnGenerator, self).__init__()
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
+        self.batch_num = 100
 
     def start(self):
         start = 0
@@ -24,9 +26,26 @@ class AnnGenerator(SpiderBase):
 
     def get_origin_datas(self, start):
         self._tonglian_init()
-        sql = '''select * from announcement_base order by id limit {}, 100; '''.format(start*100)
+        sql = '''select * from announcement_base order by id limit {}, {}; '''.format(
+            start*self.batch_num, self.batch_num)
         datas = self.tonglian_client.select_all(sql)
         return datas
+
+    def post_task(self, req_data, data, title):
+        data_json = json.dumps(req_data).encode('utf8')
+        resp = requests.post(self.api, data_json)
+        return_data = json.loads(resp.text)
+        if return_data.get("event_ann"):
+            return_data = return_data.get("event_ann")[0]
+            item = {}
+            item['AnnID'] = data.get("id")
+            item['PubTime'] = data.get("PubDatetime1")
+            item['Title'] = title
+            item['PDFLink'] = data.get("PDFLink")
+            item['SecuCode'] = data.get('SecuCode')
+            item['EventCode'] = return_data.get("event_code")
+            item['EventName'] = return_data.get("event_name")
+            return item
 
     def post_api(self, datas):
         items = []
@@ -34,26 +53,17 @@ class AnnGenerator(SpiderBase):
             title = data.get("Title2")
             if not title:
                 title = data.get('SecuAbbr') + data.get("Title1")
+
             req_data = {
                 'texttype': 'ann',
                 'title': title,
                 'content': title,
                 'prolist': ['event_ann'],
             }
-            data_json = json.dumps(req_data).encode('utf8')
-            resp = requests.post(self.api, data_json)
-            return_data = json.loads(resp.text)
-            if return_data.get("event_ann"):
-                return_data = return_data.get("event_ann")[0]
-                item = {}
-                item['AnnID'] = data.get("id")
-                item['PubTime'] = data.get("PubDatetime1")
-                item['Title'] = title
-                item['PDFLink'] = data.get("PDFLink")
-                item['SecuCode'] = data.get('SecuCode')
-                item['EventCode'] = return_data.get("event_code")
-                item['EventName'] = return_data.get("event_name")
-                items.append(item)
+
+            # TODO post 接口部分优化
+            item = self.post_task(req_data, data, title)
+            items.append(item)
         return items
 
     def _ret_table(self):
