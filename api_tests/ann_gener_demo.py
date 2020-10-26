@@ -5,8 +5,9 @@ import os
 import sys
 import threading
 import time
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
-
 import requests
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
@@ -104,20 +105,26 @@ class AnnGenerator(SpiderBase):
 
     # @timing
     def post_task(self, req_data, data, title):
-        data_json = json.dumps(req_data).encode('utf8')
-        resp = requests.post(self.api, data_json)
-        return_data = json.loads(resp.text)
-        if return_data.get("event_ann"):
-            return_data = return_data.get("event_ann")[0]
-            item = {}
-            item['AnnID'] = data.get("id")
-            item['PubTime'] = data.get("PubDatetime1")
-            item['Title'] = title
-            item['PDFLink'] = data.get("PDFLink")
-            item['SecuCode'] = data.get('SecuCode')
-            item['EventCode'] = return_data.get("event_code")
-            item['EventName'] = return_data.get("event_name")
-            return item
+        try:
+            data_json = json.dumps(req_data).encode('utf8')
+            resp = requests.post(self.api, data_json)
+            return_data = json.loads(resp.text)
+            if return_data.get("event_ann"):
+                return_data = return_data.get("event_ann")[0]
+                item = {}
+                item['AnnID'] = data.get("id")
+                item['PubTime'] = data.get("PubDatetime1")
+                item['Title'] = title
+                item['PDFLink'] = data.get("PDFLink")
+                item['SecuCode'] = data.get('SecuCode')
+                item['EventCode'] = return_data.get("event_code")
+                item['EventName'] = return_data.get("event_name")
+                return item
+        except:
+            # TODO  use log
+            with open("error.log", "a") as f:
+                f.write("请求{}失败".format(data.get("id")))
+            return None
 
     # @timing
     def post_api(self, datas):
@@ -136,13 +143,21 @@ class AnnGenerator(SpiderBase):
         items = []
 
         # TODO 测试接口合适并发数
-        for param in params:
-            try:
-                item = self.post_task(*param)
-            except:
-                item = None
+        with ThreadPoolExecutor(max_workers=3) as t:
+            res = [t.submit(self.post_task, *param) for param in params]
+        for future in as_completed(res):
+            item = future.result()
             if item:
                 items.append(item)
+
+        # for param in params:
+        #     try:
+        #         item = self.post_task(*param)
+        #     except:
+        #         item = None
+        #     if item:
+        #         items.append(item)
+
         return items
 
     def _ret_table(self):
@@ -182,7 +197,7 @@ def api_schedule():
     print("mul count: ", mul_count)
 
     with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, dispath_id(300000, start=200000))
+        workers.map(process_task, dispath_id(600000, start=500000))
 
 
 if __name__ == '__main__':
