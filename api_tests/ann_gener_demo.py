@@ -1,26 +1,40 @@
 import json
 import multiprocessing
+import time
+from functools import wraps
 
 import requests
 
 from base_spider import SpiderBase
 
 
+def timing(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        r = func(*args, **kwargs)
+        end = time.perf_counter()
+        print('[' + func.__name__ + ']used:' + str(end - start))
+        return r
+    return wrapper
+
+
 class AnnGenerator(SpiderBase):
     """测试公告模型接口用"""
-    def __init__(self, start):
+    def __init__(self, start, end):
         super(AnnGenerator, self).__init__()
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
         self.batch_num = 100
         self.start = start
+        self.end = end
 
     def launch(self):
         while True:
             datas = self.get_origin_datas(self.start)
             print("start: ", self.start, "len(datas): ", len(datas))
-            if len(datas) == 0:
+            if len(datas) == 0 or self.start > self.end:
                 break
             items = self.post_api(datas)
             self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
@@ -33,6 +47,7 @@ class AnnGenerator(SpiderBase):
         datas = self.tonglian_client.select_all(sql)
         return datas
 
+    @timing
     def post_task(self, req_data, data, title):
         data_json = json.dumps(req_data).encode('utf8')
         resp = requests.post(self.api, data_json)
@@ -72,13 +87,6 @@ class AnnGenerator(SpiderBase):
             if item:
                 items.append(item)
 
-        # mul_count = multiprocessing.cpu_count()
-        # print("mul count: ", mul_count)
-        # with multiprocessing.Pool(mul_count) as workers:
-        #     item = workers.imap_unordered(self.post_task, params)
-        #     if item:
-        #         items.append(item)
-
         print("post resp: ", len(items))
         return items
 
@@ -103,5 +111,15 @@ class AnnGenerator(SpiderBase):
         '''
 
 
+def api_schedule():
+    # mul_count = multiprocessing.cpu_count()
+    # print("mul count: ", mul_count)
+    # with multiprocessing.Pool(mul_count) as workers:
+    #     item = workers.imap_unordered(self.post_task, params)
+    #     if item:
+    #         items.append(item)
+    pass
+
+
 if __name__ == '__main__':
-    AnnGenerator(start=0).launch()
+    AnnGenerator(start=0, end=100).launch()
