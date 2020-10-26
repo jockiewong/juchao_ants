@@ -122,6 +122,11 @@ def process_task(args):
     AnnGenerator(start=start, end=end).launch()
 
 
+def dispath(max_number):
+    for start in range(max_number // 100 + 1):
+        yield start * 100 + 1, start*100 + 100
+
+
 def api_schedule():
     mul_count = multiprocessing.cpu_count()
     print("mul count: ", mul_count)
@@ -133,7 +138,9 @@ def api_schedule():
 if __name__ == '__main__':
     # AnnGenerator(start=0, end=100).launch()
 
-    api_schedule()
+    # api_schedule()
+
+    dispath(1000000)
 
     pass
 
