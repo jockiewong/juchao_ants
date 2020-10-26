@@ -1,7 +1,9 @@
+import datetime
 import json
 import multiprocessing
 import os
 import sys
+import threading
 import time
 from functools import wraps
 
@@ -25,36 +27,70 @@ def timing(func):
     return wrapper
 
 
+@timing
+def api_test():
+    Threads = []
+    THREAD_NUM = 200
+
+    def work_test():
+        data = {'texttype': 'news',
+                'title': "我来call一次接口耶",
+                'content': "我来call一次接口耶",
+                'prolist': ['event_ann']
+                }
+        data_json = json.dumps(data)
+        resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json)
+        if resp and resp.status_code == 200:
+            print(resp.text)
+
+    for i in range(THREAD_NUM):
+        t = threading.Thread(target=work_test, name="T" + str(i))
+        t.setDaemon(True)
+        Threads.append(t)
+    for t in Threads:
+        t.start()
+    for t in Threads:
+        t.join()
+    '''
+    [api_test]used:0.8137136180000001 # 1 
+    [api_test]used:0.724188025        # 5 
+    [api_test]used:0.8458107020000001  # 10 
+    [api_test]used:1.383296724      # 20 
+    [api_test]used:2.701941949     # 50 
+    [api_test]used:3.644817121     # 100
+    [api_test]used:5.901716985     # 200
+    ... 
+
+    
+    '''
+
+
 class AnnGenerator(SpiderBase):
     """测试公告模型接口用"""
-    def __init__(self, start, end):
+    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
         super(AnnGenerator, self).__init__()
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
         self.target_fields = ['AnnID', 'PubTime', 'Title', 'PDFLink', 'SecuCode', 'EventCode', 'EventName']
         self.batch_num = 100
-        self.start = start
-        self.end = end
+        self.start_time = start_time
+        self.end_time = end_time
 
-    @timing
     def launch(self):
-        while True:
-            datas = self.get_origin_datas(self.start)
-            print("start: ", self.start, "len(datas): ", len(datas))
-            if len(datas) == 0 or self.start > self.end:
-                break
-            items = self.post_api(datas)
-            self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
-            self.start += 1
+        datas = self.get_origin_datas()
+        print("req datas: ", len(datas))
+        items = self.post_api(datas)
+        print("post resp: ", len(items))
+        self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
 
-    def get_origin_datas(self, start):
+    def get_origin_datas(self):
         self._tonglian_init()
-        sql = '''select * from announcement_base order by id limit {}, {}; '''.format(
-            start*self.batch_num, self.batch_num)
+        sql = '''select * from announcement_base where UpdateTime > '{}' and UpdateTime < '{}'; '''.format(self.start_time, self.end_time)
+        print("sql is: ", sql)
         datas = self.tonglian_client.select_all(sql)
         return datas
 
-    # @timing
+    @timing
     def post_task(self, req_data, data, title):
         data_json = json.dumps(req_data).encode('utf8')
         resp = requests.post(self.api, data_json)
@@ -86,16 +122,13 @@ class AnnGenerator(SpiderBase):
                 'prolist': ['event_ann'],
             }
             params.append((req_data, data, title))
-        # print(params)
-        # print(len(params))
         items = []
 
+        # TODO 测试接口合适并发数
         for param in params:
             item = self.post_task(*param)
             if item:
                 items.append(item)
-
-        print("post resp: ", len(items))
         return items
 
     def _ret_table(self):
@@ -119,31 +152,38 @@ class AnnGenerator(SpiderBase):
         '''
 
 
-def process_task(args):
-    start, end = args[0], args[1]
-    AnnGenerator(start=start, end=end).launch()
-
-
-def dispath(max_number):
-    for start in range(max_number // 100 + 1):
-        yield start * 100 + 1, start*100 + 100
-
-
-def api_schedule():
-    mul_count = multiprocessing.cpu_count()
-    print("mul count: ", mul_count)
-    with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, dispath(500 * 10**4))
+# def process_task(args):
+#     start, end = args[0], args[1]
+#     print("start is {} and end is {}".format(start, end))
+#     AnnGenerator(start=start, end=end).launch()
+#
+#
+# def dispath(max_number):
+#     for start in range(2, max_number // 100 + 1):
+#         yield start * 100 + 1, start*100 + 100
+#
+#
+# def api_schedule():
+#     mul_count = multiprocessing.cpu_count()
+#     print("mul count: ", mul_count)
+#
+#     with multiprocessing.Pool(mul_count) as workers:
+#         workers.map(process_task, dispath(500 * 10**4))
 
 
 if __name__ == '__main__':
-    # AnnGenerator(start=0, end=100).launch()
+    # _end_time = datetime.datetime.now()
+    # _start_time = _end_time - datetime.timedelta(days=1)
+    # AnnGenerator(_start_time, _end_time).launch()
 
     # g_ = dispath(10000)
     # for one in g_:
     #     print(one)
 
-    api_schedule()
+    # api_schedule()
+
+
+    api_test()
 
     pass
 
