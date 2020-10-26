@@ -36,6 +36,7 @@ class AnnGenerator(SpiderBase):
         self.start = start
         self.end = end
 
+    @timing
     def launch(self):
         while True:
             datas = self.get_origin_datas(self.start)
@@ -53,7 +54,7 @@ class AnnGenerator(SpiderBase):
         datas = self.tonglian_client.select_all(sql)
         return datas
 
-    @timing
+    # @timing
     def post_task(self, req_data, data, title):
         data_json = json.dumps(req_data).encode('utf8')
         resp = requests.post(self.api, data_json)
@@ -70,6 +71,7 @@ class AnnGenerator(SpiderBase):
             item['EventName'] = return_data.get("event_name")
             return item
 
+    # @timing
     def post_api(self, datas):
         # TODO post 接口部分优化
         params = []
@@ -84,8 +86,8 @@ class AnnGenerator(SpiderBase):
                 'prolist': ['event_ann'],
             }
             params.append((req_data, data, title))
-        print(params)
-        print(len(params))
+        # print(params)
+        # print(len(params))
         items = []
 
         for param in params:
@@ -130,17 +132,18 @@ def dispath(max_number):
 def api_schedule():
     mul_count = multiprocessing.cpu_count()
     print("mul count: ", mul_count)
-    params = [(100, 200), (200, 300)]
     with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, params)
+        workers.map(process_task, dispath(500 * 10**4))
 
 
 if __name__ == '__main__':
     # AnnGenerator(start=0, end=100).launch()
 
-    # api_schedule()
+    # g_ = dispath(10000)
+    # for one in g_:
+    #     print(one)
 
-    dispath(1000000)
+    api_schedule()
 
     pass
 
