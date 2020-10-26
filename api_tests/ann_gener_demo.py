@@ -67,7 +67,12 @@ def api_test():
 
 class AnnGenerator(SpiderBase):
     """测试公告模型接口用"""
-    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(self,
+                 start_time: datetime.datetime = None,
+                 end_time: datetime.datetime = None,
+                 start_id: int = None,
+                 end_id: int = None,
+                 ):
         super(AnnGenerator, self).__init__()
         self.api = "http://139.159.245.37:9009/jznlpsv/v2/query/"
         self.target_table_name = 'dc_ann_event_source_ann_detail'
@@ -75,6 +80,8 @@ class AnnGenerator(SpiderBase):
         self.batch_num = 100
         self.start_time = start_time
         self.end_time = end_time
+        self.start_id = start_id
+        self.end_id = end_id
 
     def launch(self):
         datas = self.get_origin_datas()
@@ -85,12 +92,17 @@ class AnnGenerator(SpiderBase):
 
     def get_origin_datas(self):
         self._tonglian_init()
-        sql = '''select * from announcement_base where UpdateTime > '{}' and UpdateTime < '{}'; '''.format(self.start_time, self.end_time)
+        if self.start_time:
+            sql = '''select * from announcement_base where UpdateTime > '{}' and UpdateTime < '{}'; '''.format(self.start_time, self.end_time)
+        elif self.start_id:
+            sql = '''select * from announcement_base where id > '{}' and id < '{}'; '''.format(self.start_id, self.end_id)
+        else:
+            raise ValueError
         print("sql is: ", sql)
         datas = self.tonglian_client.select_all(sql)
         return datas
 
-    @timing
+    # @timing
     def post_task(self, req_data, data, title):
         data_json = json.dumps(req_data).encode('utf8')
         resp = requests.post(self.api, data_json)
@@ -109,7 +121,6 @@ class AnnGenerator(SpiderBase):
 
     # @timing
     def post_api(self, datas):
-        # TODO post 接口部分优化
         params = []
         for data in datas:
             title = data.get("Title2")
@@ -152,23 +163,22 @@ class AnnGenerator(SpiderBase):
         '''
 
 
-# def process_task(args):
-#     start, end = args[0], args[1]
-#     print("start is {} and end is {}".format(start, end))
-#     AnnGenerator(start=start, end=end).launch()
-#
-#
-# def dispath(max_number):
-#     for start in range(2, max_number // 100 + 1):
-#         yield start * 100 + 1, start*100 + 100
-#
-#
-# def api_schedule():
-#     mul_count = multiprocessing.cpu_count()
-#     print("mul count: ", mul_count)
-#
-#     with multiprocessing.Pool(mul_count) as workers:
-#         workers.map(process_task, dispath(500 * 10**4))
+def process_task(args):
+    start, end = args[0], args[1]
+    AnnGenerator(start_id=start, end_id=end).launch()
+
+
+def dispath_id(max_number):
+    for start in range(max_number // 100 + 1):
+        yield start * 100 + 1, start*100 + 100
+
+
+def api_schedule():
+    mul_count = multiprocessing.cpu_count()
+    print("mul count: ", mul_count)
+
+    with multiprocessing.Pool(mul_count) as workers:
+        workers.map(process_task, dispath_id(5000))
 
 
 if __name__ == '__main__':
@@ -176,20 +186,8 @@ if __name__ == '__main__':
     # _start_time = _end_time - datetime.timedelta(days=1)
     # AnnGenerator(_start_time, _end_time).launch()
 
-    # g_ = dispath(10000)
-    # for one in g_:
-    #     print(one)
+    api_schedule()
 
-    # api_schedule()
-
-
-    api_test()
+    # api_test()
 
     pass
-
-
-'''
-(0, 100) --> ok 
-
-
-'''
