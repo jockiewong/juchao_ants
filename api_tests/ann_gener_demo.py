@@ -168,8 +168,8 @@ def process_task(args):
     AnnGenerator(start_id=start, end_id=end).launch()
 
 
-def dispath_id(max_number):
-    for start in range(max_number // 100 + 1):
+def dispath_id(max_number, start=None):
+    for start in range(start // 100, max_number // 100 + 1):
         yield start * 100 + 1, start*100 + 100
 
 
@@ -178,7 +178,7 @@ def api_schedule():
     print("mul count: ", mul_count)
 
     with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, dispath_id(5000))
+        workers.map(process_task, dispath_id(50000, start=15000))
 
 
 if __name__ == '__main__':
