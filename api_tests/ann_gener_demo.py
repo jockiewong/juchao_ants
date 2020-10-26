@@ -117,14 +117,15 @@ class AnnGenerator(SpiderBase):
         '''
 
 
-def process_task(start, end):
+def process_task(args):
+    start, end = args[0], args[1]
     AnnGenerator(start=start, end=end).launch()
 
 
 def api_schedule():
     mul_count = multiprocessing.cpu_count()
     print("mul count: ", mul_count)
-    params = [(0, 100), (100, 200)]
+    params = [(100, 200), (200, 300)]
     with multiprocessing.Pool(mul_count) as workers:
         workers.map(process_task, params)
 
@@ -135,3 +136,10 @@ if __name__ == '__main__':
     api_schedule()
 
     pass
+
+
+'''
+(0, 100) --> ok 
+
+
+'''
