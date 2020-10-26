@@ -5,6 +5,7 @@ import os
 import sys
 import threading
 import time
+import timeit
 from concurrent.futures._base import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
@@ -28,11 +29,8 @@ def timing(func):
     return wrapper
 
 
-@timing
-def api_test():
-    Threads = []
-    THREAD_NUM = 200
-
+# @timing
+def api_test(thread_num):
     def work_test():
         data = {'texttype': 'news',
                 'title': "我来call一次接口耶",
@@ -42,28 +40,30 @@ def api_test():
         data_json = json.dumps(data)
         resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json)
         if resp and resp.status_code == 200:
-            print(resp.text)
+            # print(resp.text)
+            pass
 
-    for i in range(THREAD_NUM):
+    _threads = []
+    for i in range(thread_num):
         t = threading.Thread(target=work_test, name="T" + str(i))
         t.setDaemon(True)
-        Threads.append(t)
-    for t in Threads:
+        _threads.append(t)
+    for t in _threads:
         t.start()
-    for t in Threads:
+    for t in _threads:
         t.join()
-    '''
-    [api_test]used:0.8137136180000001 # 1 
-    [api_test]used:0.724188025        # 5 
-    [api_test]used:0.8458107020000001  # 10 
-    [api_test]used:1.383296724      # 20 
-    [api_test]used:2.701941949     # 50 
-    [api_test]used:3.644817121     # 100
-    [api_test]used:5.901716985     # 200
-    ... 
 
-    
-    '''
+
+if __name__ == '__main__':
+    # print(timeit.timeit('api_test(1)', 'from __main__ import api_test',  number=10))      # 0.480385191
+    # print(timeit.timeit('api_test(10)', 'from __main__ import api_test',  number=10))   # 0.597345931/10
+    # print(timeit.timeit('api_test(100)', 'from __main__ import api_test',  number=10))  # 4.430669795/100
+    # print(timeit.timeit('api_test(1000)', 'from __main__ import api_test',  number=10)) # 42.872432945999996/100
+    # TODO 大概在 10
+
+    # sys.exit(0)
+
+    pass
 
 
 class AnnGenerator(SpiderBase):
@@ -94,7 +94,8 @@ class AnnGenerator(SpiderBase):
     def get_origin_datas(self):
         self._tonglian_init()
         if self.start_time:
-            sql = '''select * from announcement_base where UpdateTime > '{}' and UpdateTime < '{}'; '''.format(self.start_time, self.end_time)
+            # sql = '''select * from announcement_base where UpdateTime >= '{}' and UpdateTime <= '{}'; '''.format(self.start_time, self.end_time)
+            sql = '''select * from announcement_base where PubDatetime1 >= '{}' and PubDatetime1 <= '{}'; '''.format(self.start_time, self.end_time)
         elif self.start_id:
             sql = '''select * from announcement_base where id > '{}' and id < '{}'; '''.format(self.start_id, self.end_id)
         else:
@@ -103,7 +104,6 @@ class AnnGenerator(SpiderBase):
         datas = self.tonglian_client.select_all(sql)
         return datas
 
-    # @timing
     def post_task(self, req_data, data, title):
         try:
             data_json = json.dumps(req_data).encode('utf8')
@@ -126,7 +126,6 @@ class AnnGenerator(SpiderBase):
                 f.write("请求{}失败".format(data.get("id")))
             return None
 
-    # @timing
     def post_api(self, datas):
         params = []
         for data in datas:
@@ -142,8 +141,7 @@ class AnnGenerator(SpiderBase):
             params.append((req_data, data, title))
         items = []
 
-        # TODO 测试接口合适并发数
-        with ThreadPoolExecutor(max_workers=3) as t:
+        with ThreadPoolExecutor(max_workers=10) as t:
             res = [t.submit(self.post_task, *param) for param in params]
         for future in as_completed(res):
             item = future.result()
@@ -192,20 +190,31 @@ def dispath_id(max_number, start=None):
 
 
 @timing
-def api_schedule():
+def ip_schedule():
     mul_count = multiprocessing.cpu_count()
     print("mul count: ", mul_count)
 
     with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, dispath_id(600000, start=500000))
+        workers.map(process_task, dispath_id(110*10**4, start=100*10**4))
+
+
+@timing
+def time_schedule():
+    # 最近半年的
+    _interval = 10
+    _end_time = datetime.datetime.now()
+    _start_time = _end_time - datetime.timedelta(days=365)
+
+    _dt = _end_time
+    while _dt > _start_time:
+        AnnGenerator(start_time=_dt - datetime.timedelta(days=_interval), end_time=_dt).launch()
+        _dt = _dt - datetime.timedelta(days=_interval)
 
 
 if __name__ == '__main__':
-    # _end_time = datetime.datetime.now()
-    # _start_time = _end_time - datetime.timedelta(days=1)
-    # AnnGenerator(_start_time, _end_time).launch()
+    time_schedule()
 
-    api_schedule()
+    # ip_schedule()
 
     # api_test()
 
