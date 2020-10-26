@@ -137,7 +137,10 @@ class AnnGenerator(SpiderBase):
 
         # TODO 测试接口合适并发数
         for param in params:
-            item = self.post_task(*param)
+            try:
+                item = self.post_task(*param)
+            except:
+                item = None
             if item:
                 items.append(item)
         return items
@@ -173,12 +176,13 @@ def dispath_id(max_number, start=None):
         yield start * 100 + 1, start*100 + 100
 
 
+@timing
 def api_schedule():
     mul_count = multiprocessing.cpu_count()
     print("mul count: ", mul_count)
 
     with multiprocessing.Pool(mul_count) as workers:
-        workers.map(process_task, dispath_id(50000, start=15000))
+        workers.map(process_task, dispath_id(300000, start=200000))
 
 
 if __name__ == '__main__':
