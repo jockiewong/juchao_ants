@@ -204,7 +204,7 @@ def ip_schedule():
 
 @timing
 def time_schedule():
-    # 最近半年的
+    # 最近一年的
     _interval = 10
     _end_time = datetime.datetime.now()
     _start_time = _end_time - datetime.timedelta(days=365)

@@ -100,6 +100,7 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
 CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
         print("sql is: ", load_sql)
         datas = self.r_spider_client.select_all(load_sql)
+        # TODO 加前缀
         print(len(datas))
         if len(datas) != 0:
             save_count = self._batch_save(
