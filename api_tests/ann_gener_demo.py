@@ -38,7 +38,11 @@ def api_test(thread_num):
                 'prolist': ['event_ann']
                 }
         data_json = json.dumps(data)
-        resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json)
+        try:
+            resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json)
+        except Exception as e:
+            print(e)
+            resp = None
         if resp and resp.status_code == 200:
             # print(resp.text)
             pass
