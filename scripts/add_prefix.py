@@ -7,6 +7,7 @@
 # max_id = 'select max(id) from announcement_base; '
 # for start in range(max_id//100000 + 1):
 #     sql = 'update xxx set where id >= {} and id <= {}...'.format(start, start*10000)
+import sys
 
 from base_spider import SpiderBase
 
@@ -24,10 +25,20 @@ class PrefixAdder(SpiderBase):
 
     def launch(self):
         max_id = self.get_table_max_id("announcement_base")
+
+        self._tonglian_init()
         for start in range(max_id//self.batch_num + 1):
-            print(start*self.batch_num, (start+1)*self.batch_num)
+            sh_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SH',SecuCode) \
+WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(start*self.batch_num, (start+1)*self.batch_num)
+            sh_update_count = self.tonglian_client.insert(sh_update_sql)
 
+            sz_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
+WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(start*self.batch_num, (start+1)*self.batch_num)
+            sz_update_count = self.tonglian_client.insert(sz_update_sql)
 
+            sz_update_sql2 = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
+WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(start * self.batch_num, (start + 1) * self.batch_num)
+            sz_update_count2 = self.tonglian_client.insert(sz_update_sql2)
 
 
         pass
