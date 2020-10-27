@@ -76,11 +76,11 @@ else:
 
 
 # 内网舆情测试库
-YQ_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
-YQ_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
-YQ_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
-YQ_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
-YQ_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+YQ_HOST = env.get("YQ_HOST", cf.get('yuqing', 'YQ_HOST'))
+YQ_PORT = env.get("YQ_PORT", cf.get('yuqing', 'YQ_PORT'))
+YQ_USER = env.get("YQ_USER", cf.get('yuqing', 'YQ_USER'))
+YQ_PASSWD = env.get("YQ_PASSWD", cf.get('yuqing', 'YQ_PASSWD'))
+YQ_DB = env.get("YQ_DB", cf.get('yuqing', 'YQ_DB'))
 
 # # 通联库
 # TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
