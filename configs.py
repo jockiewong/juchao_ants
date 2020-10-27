@@ -16,6 +16,7 @@ DC_DB = env.get("DC_DB", cf.get('dc', 'DC_DB'))
 
 # deploy
 LOCAL = bool(int(env.get("LOCAL", cf.get('deploy', 'LOCAL'))))
+VPN = bool(int(env.get("LOCAL", cf.get('deploy', 'VPN'))))
 FIRST = bool(int(env.get("FIRST", cf.get('deploy', 'FIRST'))))
 SECRET = env.get("SECRET", cf.get('deploy', 'SECRET'))
 TOKEN = env.get("TOKEN", cf.get('deploy', 'TOKEN'))
@@ -31,14 +32,21 @@ TEST_MYSQL_PASSWORD = env.get("TEST_MYSQL_PASSWORD", cf.get('test', 'TEST_MYSQL_
 TEST_MYSQL_DB = env.get("TEST_MYSQL_DB", cf.get('test', 'TEST_MYSQL_DB'))
 
 # 聚源
-JUY_HOST = env.get("JUY_HOST", cf.get('juyuan', 'JUY_HOST'))
-JUY_PORT = int(env.get("JUY_PORT", cf.get('juyuan', 'JUY_PORT')))
-JUY_USER = env.get("JUY_USER", cf.get('juyuan', 'JUY_USER'))
-JUY_PASSWD = env.get("JUY_PASSWD", cf.get('juyuan', 'JUY_PASSWD'))
-JUY_DB = env.get("JUY_DB", cf.get('juyuan', 'JUY_DB'))
+if VPN:
+    JUY_HOST = env.get("JUY_HOST", cf.get('juyuan', 'JUY_HOST'))
+    JUY_PORT = int(env.get("JUY_PORT", cf.get('juyuan', 'JUY_PORT')))
+    JUY_USER = env.get("JUY_USER", cf.get('juyuan', 'JUY_USER'))
+    JUY_PASSWD = env.get("JUY_PASSWD", cf.get('juyuan', 'JUY_PASSWD'))
+    JUY_DB = env.get("JUY_DB", cf.get('juyuan', 'JUY_DB'))
+else:
+    JUY_HOST = env.get("JUY_HOST", cf.get('vjuyuan', 'JUY_HOST'))
+    JUY_PORT = int(env.get("JUY_PORT", cf.get('vjuyuan', 'JUY_PORT')))
+    JUY_USER = env.get("JUY_USER", cf.get('vjuyuan', 'JUY_USER'))
+    JUY_PASSWD = env.get("JUY_PASSWD", cf.get('vjuyuan', 'JUY_PASSWD'))
+    JUY_DB = env.get("JUY_DB", cf.get('vjuyuan', 'JUY_DB'))
 
 
-# spider
+# spider 读写
 if LOCAL:
     SPIDER_MYSQL_HOST = TEST_MYSQL_HOST
     SPIDER_MYSQL_PORT = TEST_MYSQL_PORT
@@ -52,12 +60,19 @@ else:
     SPIDER_MYSQL_PASSWORD = env.get("SPIDER_MYSQL_PASSWORD", cf.get('spider', 'SPIDER_MYSQL_PASSWORD'))
     SPIDER_MYSQL_DB = env.get("SPIDER_MYSQL_DB", cf.get('spider', 'SPIDER_MYSQL_DB'))
 
-# spider2
-SPIDER_MYSQL_HOST2 = env.get("SPIDER_MYSQL_HOST2", cf.get('spider2', 'SPIDER_MYSQL_HOST2'))
-SPIDER_MYSQL_PORT2 = int(env.get("SPIDER_MYSQL_PORT2", cf.get('spider2', 'SPIDER_MYSQL_PORT2')))
-SPIDER_MYSQL_USER2 = env.get("SPIDER_MYSQL_USER2", cf.get('spider2', 'SPIDER_MYSQL_USER2'))
-SPIDER_MYSQL_PASSWORD2 = env.get("SPIDER_MYSQL_PASSWORD2", cf.get('spider2', 'SPIDER_MYSQL_PASSWORD2'))
-SPIDER_MYSQL_DB2 = env.get("SPIDER_MYSQL_DB2", cf.get('spider2', 'SPIDER_MYSQL_DB2'))
+# spider2 只读
+if VPN:
+    SPIDER_MYSQL_HOST2 = env.get("SPIDER_MYSQL_HOST2", cf.get('spider2', 'SPIDER_MYSQL_HOST2'))
+    SPIDER_MYSQL_PORT2 = int(env.get("SPIDER_MYSQL_PORT2", cf.get('spider2', 'SPIDER_MYSQL_PORT2')))
+    SPIDER_MYSQL_USER2 = env.get("SPIDER_MYSQL_USER2", cf.get('spider2', 'SPIDER_MYSQL_USER2'))
+    SPIDER_MYSQL_PASSWORD2 = env.get("SPIDER_MYSQL_PASSWORD2", cf.get('spider2', 'SPIDER_MYSQL_PASSWORD2'))
+    SPIDER_MYSQL_DB2 = env.get("SPIDER_MYSQL_DB2", cf.get('spider2', 'SPIDER_MYSQL_DB2'))
+else:
+    SPIDER_MYSQL_HOST2 = env.get("SPIDER_MYSQL_HOST2", cf.get('vspider2', 'SPIDER_MYSQL_HOST2'))
+    SPIDER_MYSQL_PORT2 = int(env.get("SPIDER_MYSQL_PORT2", cf.get('vspider2', 'SPIDER_MYSQL_PORT2')))
+    SPIDER_MYSQL_USER2 = env.get("SPIDER_MYSQL_USER2", cf.get('vspider2', 'SPIDER_MYSQL_USER2'))
+    SPIDER_MYSQL_PASSWORD2 = env.get("SPIDER_MYSQL_PASSWORD2", cf.get('vspider2', 'SPIDER_MYSQL_PASSWORD2'))
+    SPIDER_MYSQL_DB2 = env.get("SPIDER_MYSQL_DB2", cf.get('vspider2', 'SPIDER_MYSQL_DB2'))
 
 
 # 通联
