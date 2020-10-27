@@ -53,6 +53,8 @@ class MergeBase(SpiderBase):
             data['SecuCode'] = "SH" + secu_code
         elif secu_code.startswith("3") or secu_code.startswith("0"):
             data['SecuCode'] = "SZ" + secu_code
+        else:
+            return None
 
         return data
 
@@ -70,7 +72,9 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
             print("sql is: ", load_sql)
             datas = self.test_client.select_all(load_sql)
             print("select count: ", len(datas))
+            # 批量加前缀 并且去掉前缀不是  0 3 6 的
             datas = [self.process_secucode(data) for data in datas]
+            datas = [data for data in datas if data is not None]
             if len(datas) != 0:
                 save_count = self._batch_save(
                     self.tonglian_client, datas, self.merge_table_name,
@@ -115,8 +119,9 @@ CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.f
         print("sql is: ", load_sql)
         datas = self.r_spider_client.select_all(load_sql)
         print(len(datas))
-
-        datas = [self.process_secucode(data) for data in datas]   # 批量加前缀
+        # 批量加前缀 并且去掉前缀不是  0 3 6 的
+        datas = [self.process_secucode(data) for data in datas]
+        datas = [data for data in datas if data is not None]
 
         if len(datas) != 0:
             save_count = self._batch_save(
