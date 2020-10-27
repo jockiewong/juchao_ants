@@ -32,7 +32,7 @@ TEST_MYSQL_PASSWORD = env.get("TEST_MYSQL_PASSWORD", cf.get('test', 'TEST_MYSQL_
 TEST_MYSQL_DB = env.get("TEST_MYSQL_DB", cf.get('test', 'TEST_MYSQL_DB'))
 
 # 聚源
-if VPN:
+if not VPN:
     JUY_HOST = env.get("JUY_HOST", cf.get('juyuan', 'JUY_HOST'))
     JUY_PORT = int(env.get("JUY_PORT", cf.get('juyuan', 'JUY_PORT')))
     JUY_USER = env.get("JUY_USER", cf.get('juyuan', 'JUY_USER'))
@@ -61,7 +61,7 @@ else:
     SPIDER_MYSQL_DB = env.get("SPIDER_MYSQL_DB", cf.get('spider', 'SPIDER_MYSQL_DB'))
 
 # spider2 只读
-if VPN:
+if not VPN:
     SPIDER_MYSQL_HOST2 = env.get("SPIDER_MYSQL_HOST2", cf.get('spider2', 'SPIDER_MYSQL_HOST2'))
     SPIDER_MYSQL_PORT2 = int(env.get("SPIDER_MYSQL_PORT2", cf.get('spider2', 'SPIDER_MYSQL_PORT2')))
     SPIDER_MYSQL_USER2 = env.get("SPIDER_MYSQL_USER2", cf.get('spider2', 'SPIDER_MYSQL_USER2'))
