@@ -143,13 +143,3 @@ if __name__ == '__main__':
     while True:
         schedule.run_pending()
         time.sleep(10)
-
-
-'''
-cd ../ 
-docker build -f Dockerfile_his -t registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1 .
-docker push registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1 
-sudo docker pull registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1 
-sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
--itd --name ant --env LOCAL=0 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_ant:v1
-'''
