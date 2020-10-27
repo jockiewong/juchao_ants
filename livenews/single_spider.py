@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import requests
+import schedule
 from retrying import retry
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
@@ -12,25 +13,16 @@ sys.path.insert(0, file_path)
 
 from base_spider import SpiderBase
 
-org_tablecode_map = {
-    "juchao_kuaixun": ['巨潮快讯', 1060, ],
-    'xueqiu_livenews': ['雪球快讯', 1074, ],
-}
-
 
 class SingleJuchaoDayNews(SpiderBase):
     def __init__(self):
         super(SingleJuchaoDayNews, self).__init__()
         self.web_url = 'http://www.cninfo.com.cn/new/commonUrl/quickNews?url=/disclosure/quickNews&queryDate=2020-08-13'
         self.api_url = 'http://www.cninfo.com.cn/new/quickNews/queryQuickNews?queryDate={}&type='
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36',
-        }
 
         self.fields = ['code', 'name', 'link', 'title', 'type', 'pub_date']
         self.table_name = 'juchao_kuaixun'
-        info = org_tablecode_map.get(self.table_name)
-        self.name, self.table_code = info[0], info[1]
+        self.name = '巨潮快讯'
         self._juyuan_init()
         self._spider_init()
 
@@ -135,3 +127,11 @@ class SingleJuchaoDayNews(SpiderBase):
                         print()
                     self._batch_save(self.spider_client, items, self.table_name, self.fields)
             _day += datetime.timedelta(days=1)
+
+
+if __name__ == '__main__':
+    schedule.every(30).seconds.do(SingleJuchaoDayNews().start)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(10)

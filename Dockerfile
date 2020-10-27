@@ -13,5 +13,3 @@ ADD . /juchao_ant
 WORKDIR /juchao_ant
 
 RUN pip install -r requirements.txt -i https://pypi.douban.com/simple
-
-ENTRYPOINT ["python", "livenews/live_task.py"]
