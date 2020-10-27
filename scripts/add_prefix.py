@@ -21,33 +21,34 @@ from base_spider import SpiderBase
 
 
 class PrefixAdder(SpiderBase):
-    def __init__(self):
+    def __init__(self, table_name: str):
         super(PrefixAdder, self).__init__()
         self.batch_num = 10000   # 单次更新的个数 不超过 10 M？
+        self.table_name = table_name   # "announcement_base"
 
-    def get_table_max_id(self, table_name: str):
+    def get_table_max_id(self):
         self._tonglian_init()
-        sql = '''select max(id) as max_id from {}; '''.format(table_name)
+        sql = '''select max(id) as max_id from {}; '''.format(self.table_name)
         max_id = self.tonglian_client.select_one(sql).get("max_id")
         return max_id
 
     def launch(self):
-        max_id = self.get_table_max_id("announcement_base")
+        max_id = self.get_table_max_id()
         print("max id is {}".format(max_id))
 
         self._tonglian_init()
         for start in range(max_id//self.batch_num + 1):
             _start, _end = start*self.batch_num, (start+1)*self.batch_num
-            sh_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SH',SecuCode) \
-WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(_start, _end)
+            sh_update_sql = '''UPDATE {} SET SecuCode=CONCAT('SH',SecuCode) \
+WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(self.table_name, _start, _end)
             sh_update_count = self.tonglian_client.insert(sh_update_sql)
 
-            sz_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
-WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(_start, _end)
+            sz_update_sql = '''UPDATE {} SET SecuCode=CONCAT('SZ',SecuCode)\
+WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(self.table_name, _start, _end)
             sz_update_count = self.tonglian_client.insert(sz_update_sql)
 
-            sz_update_sql2 = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
-WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(_start, _end)
+            sz_update_sql2 = '''UPDATE {} SET SecuCode=CONCAT('SZ',SecuCode)\
+WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(self.table_name, _start, _end)
             sz_update_count2 = self.tonglian_client.insert(sz_update_sql2)
 
             print("start: {}\t end: {}\t sh: {}\tsz_3: {}\tsz_0:{}".format(
@@ -64,4 +65,8 @@ WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(_start, _end)
 
 
 if __name__ == '__main__':
-    PrefixAdder().launch()
+    # PrefixAdder('announcement_base').launch()
+
+    PrefixAdder('dc_ann_event_source_ann_detail').launch()
+
+    pass
