@@ -11,7 +11,12 @@
 # 以 0 1 2 3 6 9 开头的股票都有
 # 20201027 确认需求只要 0 3 6 开头的 删除 1 2 9
 
+import os
 import sys
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
+
 from base_spider import SpiderBase
 
 
