@@ -22,7 +22,8 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      JUY_DB, DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, SECRET, TOKEN, LOCAL, LOCAL_PROXY_URL,
                      PROXY_URL, TEST_MYSQL_HOST, TEST_MYSQL_PORT, TEST_MYSQL_USER, TEST_MYSQL_PASSWORD,
                      TEST_MYSQL_DB, SPIDER_MYSQL_HOST2, SPIDER_MYSQL_PORT2, SPIDER_MYSQL_USER2,
-                     SPIDER_MYSQL_PASSWORD2, SPIDER_MYSQL_DB2, YQ_HOST, YQ_PORT, YQ_USER, YQ_PASSWD, YQ_DB)
+                     SPIDER_MYSQL_PASSWORD2, SPIDER_MYSQL_DB2, YQ_HOST, YQ_PORT, YQ_USER, YQ_PASSWD,
+                     YQ_DB, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB)
 from sql_pool import PyMysqlPoolBase
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -84,15 +85,16 @@ class SpiderBase(object):
         "db": DC_DB,
     }
 
-    # # 通联测试库
-    # tonglian_cfg = {
-    #     "host": TL_HOST,
-    #     "port": TL_PORT,
-    #     "user": TL_USER,
-    #     "password": TL_PASSWD,
-    #     "db": TL_DB,
-    # }
+    # 通联测试库
+    tonglian_cfg = {
+        "host": TL_HOST,
+        "port": TL_PORT,
+        "user": TL_USER,
+        "password": TL_PASSWD,
+        "db": TL_DB,
+    }
 
+    # 舆情测试库
     yuqing_cfg = {
         "host": YQ_HOST,
         "port": YQ_PORT,
@@ -107,7 +109,7 @@ class SpiderBase(object):
         self.product_client = None
         self.juyuan_client = None
         self.spider_client = None
-        # self.tonglian_client = None
+        self.tonglian_client = None
         self.yuqing_client = None
         self.r_spider_client = None
 
@@ -147,9 +149,9 @@ class SpiderBase(object):
         if not self.r_spider_client:
             self.r_spider_client = self._init_pool(self.spider_cfg2)
             
-    # def _tonglian_init(self):
-    #     if not self.tonglian_client:
-    #         self.tonglian_client = self._init_pool(self.tonglian_cfg)
+    def _tonglian_init(self):
+        if not self.tonglian_client:
+            self.tonglian_client = self._init_pool(self.tonglian_cfg)
 
     def _yuqing_init(self):
         if not self.yuqing_client:
@@ -159,7 +161,7 @@ class SpiderBase(object):
         """结束时销毁已经存在的数据库连接"""
         for _client in (self.dc_client, self.product_client, self.juyuan_client,
                         self.spider_client, self.test_client, self.yuqing_client,
-                        # self.tonglian_client,
+                        self.tonglian_client,
                         self.r_spider_client,
                         ):
             if _client is not None:

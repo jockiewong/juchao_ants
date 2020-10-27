@@ -82,12 +82,12 @@ YQ_USER = env.get("YQ_USER", cf.get('yuqing', 'YQ_USER'))
 YQ_PASSWD = env.get("YQ_PASSWD", cf.get('yuqing', 'YQ_PASSWD'))
 YQ_DB = env.get("YQ_DB", cf.get('yuqing', 'YQ_DB'))
 
-# # 通联库
-# TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
-# TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
-# TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
-# TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
-# TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+# 通联库
+TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
+TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
+TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
+TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
 
 
 # product
