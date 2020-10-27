@@ -43,6 +43,19 @@ class MergeBase(SpiderBase):
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告基础表'
         '''
 
+    def process_secucode(self, data: dict):
+        """secucode 加前缀
+
+        规则:
+        """
+        secu_code = data.get("SecuCode")
+        if secu_code.startswith("6"):
+            data['SecuCode'] = "SH" + secu_code
+        elif secu_code.startswith("3") or secu_code.startswith("0"):
+            data['SecuCode'] = "SZ" + secu_code
+
+        return data
+
     def load_his_ants(self):
         self._test_init()
         self._tonglian_init()
@@ -57,6 +70,7 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
             print("sql is: ", load_sql)
             datas = self.test_client.select_all(load_sql)
             print("select count: ", len(datas))
+            datas = [self.process_secucode(data) for data in datas]
             if len(datas) != 0:
                 save_count = self._batch_save(
                     self.tonglian_client, datas, self.merge_table_name,
@@ -100,17 +114,9 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
 CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
         print("sql is: ", load_sql)
         datas = self.r_spider_client.select_all(load_sql)
-        # TODO 加前缀
         print(len(datas))
 
-        for data in datas:
-            secu_code = data.get("SecuCode")
-            if secu_code.startswith("6"):
-                data['SecuCode'] = "SH" + secu_code
-            elif secu_code.startswith("3") or secu_code.startswith("0"):
-                data['SecuCode'] = "SZ" + secu_code
-            # print(data)
-        # sys.exit(0)
+        datas = [self.process_secucode(data) for data in datas]   # 批量加前缀
 
         if len(datas) != 0:
             save_count = self._batch_save(
