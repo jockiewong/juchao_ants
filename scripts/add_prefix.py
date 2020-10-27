@@ -41,7 +41,8 @@ WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(_start, _end)
 WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(_start, _end)
             sz_update_count2 = self.tonglian_client.insert(sz_update_sql2)
 
-            print("sh: {}\tsz_3: {}\tsz_0:{}".format(sh_update_count, sz_update_count, sz_update_count2))
+            print("start: {}\tsh: {}\tsz_3: {}\tsz_0:{}".format(
+                start, sh_update_count, sz_update_count, sz_update_count2))
 
 
 if __name__ == '__main__':

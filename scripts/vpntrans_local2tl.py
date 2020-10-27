@@ -102,6 +102,16 @@ CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.f
         datas = self.r_spider_client.select_all(load_sql)
         # TODO 加前缀
         print(len(datas))
+
+        for data in datas:
+            secu_code = data.get("SecuCode")
+            if secu_code.startswith("6"):
+                data['SecuCode'] = "SH" + secu_code
+            elif secu_code.startswith("3") or secu_code.startswith("0"):
+                data['SecuCode'] = "SZ" + secu_code
+            # print(data)
+        # sys.exit(0)
+
         if len(datas) != 0:
             save_count = self._batch_save(
                 self.tonglian_client, datas, self.merge_table_name,
@@ -116,14 +126,14 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
         datas = self.r_spider_client.select_all(update_sql)
         print(len(datas))
         for data in datas:
-            print()
-            print()
-            print(data)
+            # print()
+            # print()
+            # print(data)
             sql = '''update {} set PubDatetime2 = '{}', InsertDatetime2 = '{}', Title2 = '{}' where PDFLink = '{}'; '''.format(
                 self.merge_table_name, data.get("pub_date"), data.get("CREATETIMEJZ"), data.get("title"),
                 data.get("link")
             )
-            print(sql)
+            # print(sql)
             count = self.tonglian_client.insert(sql)
             if count == 1:
                 print("插入新数据 {}".format(data))
