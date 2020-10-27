@@ -75,12 +75,19 @@ else:
     SPIDER_MYSQL_DB2 = env.get("SPIDER_MYSQL_DB2", cf.get('vspider2', 'SPIDER_MYSQL_DB2'))
 
 
-# 通联
-TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
-TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
-TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
-TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
-TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+# 内网舆情测试库
+YQ_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
+YQ_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+YQ_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
+YQ_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
+YQ_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+
+# # 通联库
+# TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
+# TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+# TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
+# TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
+# TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
 
 
 # product

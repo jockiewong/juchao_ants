@@ -19,9 +19,9 @@ class MergeBase(SpiderBase):
         self.batch_number = 1000
 
     def show_merge_table(self):
-        self._tonglian_init()
+        self._yuqing_init()
         sql = '''show create table {}; '''.format(self.merge_table_name)
-        ret = self.tonglian_client.select_one(sql).get("Create Table")
+        ret = self.yuqing_client.select_one(sql).get("Create Table")
         print(ret)
         '''
         CREATE TABLE `announcement_base` (
@@ -60,7 +60,7 @@ class MergeBase(SpiderBase):
 
     def load_his_ants(self):
         self._test_init()
-        self._tonglian_init()
+        self._yuqing_init()
 
         for start in range(0, 5000):
             print()
@@ -77,7 +77,7 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
             datas = [data for data in datas if data is not None]
             if len(datas) != 0:
                 save_count = self._batch_save(
-                    self.tonglian_client, datas, self.merge_table_name,
+                    self.yuqing_client, datas, self.merge_table_name,
                     ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
                 print("save count: ", save_count)
             else:
@@ -86,7 +86,7 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
 
     def load_his_live(self):
         self._test_init()
-        self._tonglian_init()
+        self._yuqing_init()
 
         sql = '''select A.* from juchao_kuaixun A, juchao_ant B where A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''
         datas = self.test_client.select_all(sql)
@@ -100,18 +100,18 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
                 self.merge_table_name, data.get("pub_date"), data.get("CREATETIMEJZ"), data.get("title"), data.get("link")
             )
             print(sql)
-            count = self.tonglian_client.insert(sql)
+            count = self.yuqing_client.insert(sql)
             if count == 1:
                 print("插入新数据 {}".format(data))
             elif count == 0:
                 print("已有数据 {} ".format(data))
             else:
                 print("count is {}".format(count))
-            self.tonglian_client.end()
+            self.yuqing_client.end()
 
     def load_inc(self):
         self._spider2_init()
-        self._tonglian_init()
+        self._yuqing_init()
         deadline = datetime.datetime.now() - datetime.timedelta(days=2)
 
         load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
@@ -125,7 +125,7 @@ CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.f
 
         if len(datas) != 0:
             save_count = self._batch_save(
-                self.tonglian_client, datas, self.merge_table_name,
+                self.yuqing_client, datas, self.merge_table_name,
                 ['SecuCode', 'SecuAbbr', 'PDFLink', 'PubDatetime1', 'InsertDatetime1', 'Title1'])
             print("save count: ", save_count)
         else:
@@ -145,14 +145,14 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
                 data.get("link")
             )
             # print(sql)
-            count = self.tonglian_client.insert(sql)
+            count = self.yuqing_client.insert(sql)
             if count == 1:
                 print("插入新数据 {}".format(data))
             elif count == 0:
                 print("已有数据 {} ".format(data))
             else:
                 print("count is {}".format(count))
-            self.tonglian_client.end()
+            self.yuqing_client.end()
 
     def start(self):
         # self.load_his_ants()

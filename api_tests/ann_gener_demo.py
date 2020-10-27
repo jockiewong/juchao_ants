@@ -93,10 +93,10 @@ class AnnGenerator(SpiderBase):
         print("req datas: ", len(datas))
         items = self.post_api(datas)
         print("post resp: ", len(items))
-        self._batch_save(self.tonglian_client, items, self.target_table_name, self.target_fields)
+        self._batch_save(self.yuqing_client, items, self.target_table_name, self.target_fields)
 
     def get_origin_datas(self):
-        self._tonglian_init()
+        self._yuqing_init()
         if self.start_time:
             # sql = '''select * from announcement_base where UpdateTime >= '{}' and UpdateTime <= '{}'; '''.format(self.start_time, self.end_time)
             sql = '''select * from announcement_base where PubDatetime1 >= '{}' and PubDatetime1 <= '{}'; '''.format(self.start_time, self.end_time)
@@ -105,7 +105,7 @@ class AnnGenerator(SpiderBase):
         else:
             raise ValueError
         print("sql is: ", sql)
-        datas = self.tonglian_client.select_all(sql)
+        datas = self.yuqing_client.select_all(sql)
         return datas
 
     def post_task(self, req_data, data, title):
