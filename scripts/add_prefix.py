@@ -28,20 +28,20 @@ class PrefixAdder(SpiderBase):
 
         self._tonglian_init()
         for start in range(max_id//self.batch_num + 1):
+            _start, _end = start*self.batch_num, (start+1)*self.batch_num
             sh_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SH',SecuCode) \
-WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(start*self.batch_num, (start+1)*self.batch_num)
+WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(_start, _end)
             sh_update_count = self.tonglian_client.insert(sh_update_sql)
 
             sz_update_sql = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
-WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(start*self.batch_num, (start+1)*self.batch_num)
+WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(_start, _end)
             sz_update_count = self.tonglian_client.insert(sz_update_sql)
 
             sz_update_sql2 = '''UPDATE announcement_base SET SecuCode=CONCAT('SZ',SecuCode)\
-WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(start * self.batch_num, (start + 1) * self.batch_num)
+WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(_start, _end)
             sz_update_count2 = self.tonglian_client.insert(sz_update_sql2)
 
-
-        pass
+            print("sh: {}\tsz_3: {}\tsz_0:{}".format(sh_update_count, sz_update_count, sz_update_count2))
 
 
 if __name__ == '__main__':
