@@ -7,8 +7,11 @@
 # max_id = 'select max(id) from announcement_base; '
 # for start in range(max_id//100000 + 1):
 #     sql = 'update xxx set where id >= {} and id <= {}...'.format(start, start*10000)
-import sys
 
+# 以 0 1 2 3 6 9 开头的股票都有
+# 20201027 确认需求只要 0 3 6 开头的 删除 1 2 9
+
+import sys
 from base_spider import SpiderBase
 
 
@@ -25,6 +28,7 @@ class PrefixAdder(SpiderBase):
 
     def launch(self):
         max_id = self.get_table_max_id("announcement_base")
+        print("max id is {}".format(max_id))
 
         self._tonglian_init()
         for start in range(max_id//self.batch_num + 1):
@@ -41,8 +45,17 @@ WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(_start, _end)
 WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(_start, _end)
             sz_update_count2 = self.tonglian_client.insert(sz_update_sql2)
 
-            print("start: {}\tsh: {}\tsz_3: {}\tsz_0:{}".format(
-                start, sh_update_count, sz_update_count, sz_update_count2))
+            print("start: {}\t end: {}\t sh: {}\tsz_3: {}\tsz_0:{}".format(
+                _start, _end, sh_update_count, sz_update_count, sz_update_count2))
+
+# duck 不必
+#             delete_sql = '''delete from announcement_base where \
+# id >= {} and id <= {} and \
+# (SecuCode like '1%' or SecuCode like '2%' or SecuCode like '9%'); '''.format(_start, _end)
+#             delete_count = self.tonglian_client.delete(delete_sql)
+#             print("delete {}".format(delete_count))
+
+            self.tonglian_client.end()
 
 
 if __name__ == '__main__':
