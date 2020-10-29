@@ -1,10 +1,14 @@
 # 接新闻数据源 -->  news_base_tonglian(良哥) --> dc_ann_event_source_news_detail
-
 # 新闻先直接接通联库的数据
-import json
-import sys
 
+import json
+import os
+import sys
 import requests
+
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
 
 from base_spider import SpiderBase
 
