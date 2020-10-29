@@ -1,6 +1,7 @@
 # 接股吧数据源 --> guba_base(敏仪) --> dc_ann_event_source_guba_detail
 
 # guba_base 等敏仪灌入数据
+
 import datetime
 import json
 import os
@@ -63,6 +64,8 @@ class GubaGenerator(SpiderBase):
         super(GubaGenerator, self).__init__()
         self.source_table = 'guba_base'
         self.target_table = 'dc_ann_event_source_guba_detail'
+        self.target_fields = ['GubaID', 'PubTime', 'Title', 'Website', 'SecuCode', 'EventCode',
+                              'EventName', 'Position']
         self.batch_num = 10000
 
     # def get_codes(self):
@@ -101,13 +104,18 @@ class GubaGenerator(SpiderBase):
         if resp and resp.status_code == 200:
             body = json.loads(resp.text)
             if body.get("event_ann"):
-                print(body)
-                '''
-                {'event_ann': [{'event_code': 'A005001', 'event_name': '大股东增持', 'mapping_type': 'spread', 
-                'position': 'content', 'probability': 1.0, 'secucode': '002383', 
-                'text': '大家不用担心，现在最大的亏损户不是你，而是控股股东兴慧电子——国资，该公司之前在13.43元大手笔买入002383，之后又以平均价10.4485元买入，现在股价多少钱'}]}
-                '''
-                item = {}
+                resp_data = body.get('event_ann')[0]
+                item = {
+                    'GubaID': data.get("OrgID"),
+                    'PubTime': data.get("PubDatetime"),
+                    'Title': data.get("Title"),
+                    'Website': data.get('Website'),
+                    'SecuCode': data.get("SecuCode"),
+                    'EventCode': resp_data.get("event_code"),
+                    'EventName': resp_data.get("event_name"),
+                    'Position': 2 if req_data.get('position') == 'content' else 1
+                }
+                return item
 
     def launch(self):
         self._yuqing_init()
@@ -125,16 +133,17 @@ class GubaGenerator(SpiderBase):
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
                 datas = self.yuqing_client.select_all(sql)
+                items = []
                 for data in datas:
-                    print(data)
-                    self.post_api(data)
-                    print()
-                    print()
-
+                    item = self.post_api(data)
+                    if item:
+                        print(item)
+                        items.append(item)
+                print(len(items))
+                self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                 if len(datas) == 0:
                     break
                 limit_start += 1
-
             dt = dt_next
 
 
