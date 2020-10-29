@@ -60,9 +60,30 @@ class GubaGenerator(SpiderBase):
         self.source_table = 'guba_base'
         self.target_table = 'dc_ann_event_source_guba_detail'
 
+    def get_codes(self):
+        '''
+        每天大概是 15w 条
+        codes 有 3714 个
+        每个 code 每天大概有 40 个
+        单批次 10000 个 code 每 250 个一组？ T.T
+
+        select * from (select id,xxx from table_a where time…..) order by id limit 0,10000
+
+        '''
+        self._yuqing_init()
+        sql = '''select distinct(SecuCode) from {} ;'''.format(self.source_table)
+        codes = self.yuqing_client.select_all(sql)
+        codes = [one.get("SecuCode") for one in codes]
+        return codes
+
     def launch(self):
         self._yuqing_init()
         sql = ''''''
 
         pass
 
+
+if __name__ == '__main__':
+    GubaGenerator().get_codes()
+
+    pass
