@@ -6,6 +6,8 @@ import datetime
 import json
 import os
 import sys
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import requests
 
@@ -133,12 +135,22 @@ class GubaGenerator(SpiderBase):
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
                 datas = self.yuqing_client.select_all(sql)
+
                 items = []
-                for data in datas:
-                    item = self.post_api(data)
+                with ThreadPoolExecutor(max_workers=10) as t:
+                    res = [t.submit(self.post_api, data) for data in datas]
+                for future in as_completed(res):
+                    item = future.result()
                     if item:
-                        print(item)
                         items.append(item)
+
+                # items = []
+                # for data in datas:
+                #     item = self.post_api(data)
+                #     if item:
+                #         print(item)
+                #         items.append(item)
+
                 print(len(items))
                 self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                 if len(datas) == 0:
