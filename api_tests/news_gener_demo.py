@@ -4,6 +4,9 @@
 import json
 import os
 import sys
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
+
 import requests
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
@@ -82,10 +85,13 @@ class NewsGenerator(SpiderBase):
                     }
         data_json = json.dumps(req_data)
         try:
-            resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json)
+            resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json, timeout=10)
         except Exception as e:
             print(e)
             resp = None
+            with open("news_err.log", 'a') as f:
+                f.write(f'{data.get("NEWS_ID")}\n')
+
         if resp and resp.status_code == 200:
             body = json.loads(resp.text)
             if body.get("event_news"):
@@ -98,7 +104,7 @@ class NewsGenerator(SpiderBase):
                 item['SecuCode'] = ret.get("secucode")
                 item['EventCode'] = ret.get("event_code")
                 item['Position'] = 2 if ret.get("position") == "content" else 1   # 提及位置：1-标题,2-内容
-                self._save(self.yuqing_client, item, self.target_table_name, self.target_fields)
+                return item
 
     def select_max_title_id(self):
         # 以标题中的新闻id为准
@@ -113,6 +119,7 @@ class NewsGenerator(SpiderBase):
         self._yuqing_init()
 
         max_id, min_id = self.select_max_title_id()
+        min_id = 60510000
         print(max_id, " ", min_id)
         for i in range(min_id // self.batch_num, max_id // self.batch_num + 1):
             news_id_start = self.batch_num * i
@@ -126,8 +133,16 @@ and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start,
             datas = self.tonglian_client.select_all(sql)
             print(len(datas))
 
-            for data in datas:
-                self.post_api(data)
+            items = []
+            with ThreadPoolExecutor(max_workers=10) as t:
+                res = [t.submit(self.post_api, data) for data in datas]
+            for future in as_completed(res):
+                item = future.result()
+                if item:
+                    items.append(item)
+
+            print(len(items))
+            self._batch_save(self.yuqing_client, items, self.target_table_name, self.target_fields)
 
 
 if __name__ == '__main__':
