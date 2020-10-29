@@ -17,6 +17,7 @@ class NewsGenerator(SpiderBase):
         super(NewsGenerator, self).__init__()
         self.content_table_name = 'vnews_content_v1'
         self.body_table_name = 'vnews_body_v1'
+        self.batch_num = 10000
 
     def post_api(self, data: dict):
         data = {'texttype': 'news',
@@ -37,23 +38,27 @@ class NewsGenerator(SpiderBase):
     def select_max_title_id(self):
         # 以标题中的新闻id为准
         self._tonglian_init()
-        sql = '''select max(NEWS_ID) as max_id from {} ; '''.format(self.content_table_name)
-        max_id = self.tonglian_client.select_one(sql).get("max_id")
-        return max_id
+        sql = '''select min(NEWS_ID) as min_id, max(NEWS_ID) as max_id from {} ; '''.format(self.content_table_name)
+        data = self.tonglian_client.select_one(sql)
+        max_id, min_id = data.get("max_id"), data.get("min_id")
+        return max_id, min_id
 
     def launch(self):
         self._tonglian_init()
-        max_id = self.select_max_title_id()
-        # print(max_id)    # 78182211
-
-        sql = '''select T.NEWS_TITLE, B.NEWS_BODY from vnews_content_v1 T, vnews_body_v1 B \
-where T.NEWS_ID <= {} and T.NEWS_ID >= {} \
-and B.NEWS_ID <= {} and B.NEWS_ID >= {}  \
-and  T.NEWS_ID = B.NEWS_ID; '''
-        datas = self.tonglian_client.select_all(sql)
-        for data in datas:
-            self.post_api(data)
-            print()
+        max_id, min_id = self.select_max_title_id()
+        print(max_id, " ", min_id)
+        for i in range(min_id // self.batch_num, max_id // self.batch_num + 1):
+            news_id_start = self.batch_num * i
+            news_id_end = self.batch_num * (i+1)
+            print(news_id_start, news_id_end)
+            sql = '''select T.NEWS_TITLE, B.NEWS_BODY from vnews_content_v1 T, vnews_body_v1 B \
+where T.NEWS_ID >= {} and T.NEWS_ID <= {} \
+and B.NEWS_ID >= {} and B.NEWS_ID <= {}  \
+and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start, news_id_end)
+            datas = self.tonglian_client.select_all(sql)
+            print(len(datas))
+            # for data in datas:
+            #     self.post_api(data)
 
 
 if __name__ == '__main__':
