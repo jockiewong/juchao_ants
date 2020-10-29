@@ -2,6 +2,7 @@
 
 # 新闻先直接接通联库的数据
 import json
+import sys
 
 import requests
 
@@ -33,10 +34,22 @@ class NewsGenerator(SpiderBase):
             body = json.loads(resp.text)
             print(body)
 
+    def select_max_title_id(self):
+        # 以标题中的新闻id为准
+        self._tonglian_init()
+        sql = '''select max(NEWS_ID) as max_id from {} ; '''.format(self.content_table_name)
+        max_id = self.tonglian_client.select_one(sql).get("max_id")
+        return max_id
+
     def launch(self):
         self._tonglian_init()
-        # 拿到标题
-        sql = '''select T.NEWS_TITLE, B.NEWS_BODY from vnews_content_v1 T, vnews_body_v1 B where T.NEWS_ID = B.NEWS_ID limit 10; '''
+        max_id = self.select_max_title_id()
+        # print(max_id)    # 78182211
+
+        sql = '''select T.NEWS_TITLE, B.NEWS_BODY from vnews_content_v1 T, vnews_body_v1 B \
+where T.NEWS_ID <= {} and T.NEWS_ID >= {} \
+and B.NEWS_ID <= {} and B.NEWS_ID >= {}  \
+and  T.NEWS_ID = B.NEWS_ID; '''
         datas = self.tonglian_client.select_all(sql)
         for data in datas:
             self.post_api(data)
