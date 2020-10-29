@@ -2,8 +2,11 @@
 
 # guba_base 等敏仪灌入数据
 import datetime
+import json
 import os
 import sys
+
+import requests
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
@@ -62,26 +65,55 @@ class GubaGenerator(SpiderBase):
         self.target_table = 'dc_ann_event_source_guba_detail'
         self.batch_num = 10000
 
-    def get_codes(self):
-        '''
-        每天大概是 15w 条
-        codes 有 3714 个
-        每个 code 每天大概有 40 个
-        单批次 10000 个 code 每 250 个一组？ T.T
+    # def get_codes(self):
+    #     '''
+    #     每天大概是 15w 条
+    #     codes 有 3714 个
+    #     每个 code 每天大概有 40 个
+    #     单批次 10000 个 code 每 250 个一组？ T.T
+    #
+    #     select * from (select id,xxx from table_a where time…..) order by id limit 0,10000
+    #
+    #     '''
+    #     self._yuqing_init()
+    #     sql = '''select distinct(SecuCode) from {} ;'''.format(self.source_table)
+    #     codes = self.yuqing_client.select_all(sql)
+    #     codes = [one.get("SecuCode") for one in codes]
+    #     return codes
 
-        select * from (select id,xxx from table_a where time…..) order by id limit 0,10000
+    def post_api(self, data: dict):
+        req_data = {
+            'texttype': 'tieba',
+            'title': data.get("Title"),
+            'content': data.get("Content"),
+            'prolist': ['event_ann'],
+        }
 
-        '''
-        self._yuqing_init()
-        sql = '''select distinct(SecuCode) from {} ;'''.format(self.source_table)
-        codes = self.yuqing_client.select_all(sql)
-        codes = [one.get("SecuCode") for one in codes]
-        return codes
+        data_json = json.dumps(req_data)
+        try:
+            resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json, timeout=10)
+        except Exception as e:
+            print(e)
+            resp = None
+            with open("news_err.log", 'a') as f:
+                f.write(f'{data.get("NEWS_ID")}\n')
+
+        if resp and resp.status_code == 200:
+            body = json.loads(resp.text)
+            if body.get("event_ann"):
+                print(body)
+                '''
+                {'event_ann': [{'event_code': 'A005001', 'event_name': '大股东增持', 'mapping_type': 'spread', 
+                'position': 'content', 'probability': 1.0, 'secucode': '002383', 
+                'text': '大家不用担心，现在最大的亏损户不是你，而是控股股东兴慧电子——国资，该公司之前在13.43元大手笔买入002383，之后又以平均价10.4485元买入，现在股价多少钱'}]}
+                '''
+                item = {}
 
     def launch(self):
         self._yuqing_init()
         end_time = datetime.datetime(2020, 10, 27)
-        start_time = end_time - datetime.timedelta(days=185)
+        # start_time = end_time - datetime.timedelta(days=185)
+        start_time = end_time - datetime.timedelta(days=2)
 
         dt = start_time
         while dt <= end_time:
@@ -93,6 +125,12 @@ class GubaGenerator(SpiderBase):
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
                 datas = self.yuqing_client.select_all(sql)
+                for data in datas:
+                    print(data)
+                    self.post_api(data)
+                    print()
+                    print()
+
                 if len(datas) == 0:
                     break
                 limit_start += 1
@@ -102,5 +140,3 @@ class GubaGenerator(SpiderBase):
 
 if __name__ == '__main__':
     GubaGenerator().launch()
-
-    pass

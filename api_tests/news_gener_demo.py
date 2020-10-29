@@ -81,7 +81,7 @@ class NewsGenerator(SpiderBase):
         req_data = {'texttype': 'news',
                     'title': data.get("NEWS_TITLE"),
                     'content': data.get("NEWS_BODY"),
-                    'prolist': ['event_news']
+                    'prolist': ['event_ann'],
                     }
         data_json = json.dumps(req_data)
         try:
