@@ -1,6 +1,7 @@
 # 接股吧数据源 --> guba_base(敏仪) --> dc_ann_event_source_guba_detail
 
 # guba_base 等敏仪灌入数据
+import datetime
 import os
 import sys
 
@@ -59,6 +60,7 @@ class GubaGenerator(SpiderBase):
         super(GubaGenerator, self).__init__()
         self.source_table = 'guba_base'
         self.target_table = 'dc_ann_event_source_guba_detail'
+        self.batch_num = 10000
 
     def get_codes(self):
         '''
@@ -78,12 +80,27 @@ class GubaGenerator(SpiderBase):
 
     def launch(self):
         self._yuqing_init()
-        sql = ''''''
+        end_time = datetime.datetime(2020, 10, 27)
+        start_time = end_time - datetime.timedelta(days=185)
 
-        pass
+        dt = start_time
+        while dt <= end_time:
+            dt_next = dt + datetime.timedelta(days=1)
+
+            while True:
+                limit_start = 0
+                sql = '''select * from {} where PubDatetime >= '{}' and PubDatetime <= '{}' order by id limit {}, {};'''.format(
+                    self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
+                )
+                datas = self.yuqing_client.select_all(sql)
+                if len(datas) == 0:
+                    break
+                limit_start += 1
+
+            dt = dt_next
 
 
 if __name__ == '__main__':
-    GubaGenerator().get_codes()
+    GubaGenerator().launch()
 
     pass
