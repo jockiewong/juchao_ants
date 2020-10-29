@@ -119,7 +119,8 @@ class NewsGenerator(SpiderBase):
         self._yuqing_init()
 
         max_id, min_id = self.select_max_title_id()
-        min_id = 60510000
+        # min_id = 60510000
+        min_id = 61070000
         print(max_id, " ", min_id)
         for i in range(min_id // self.batch_num, max_id // self.batch_num + 1):
             news_id_start = self.batch_num * i

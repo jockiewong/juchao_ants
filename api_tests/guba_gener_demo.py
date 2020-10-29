@@ -129,8 +129,8 @@ class GubaGenerator(SpiderBase):
         while dt <= end_time:
             dt_next = dt + datetime.timedelta(days=1)
 
+            limit_start = 0
             while True:
-                limit_start = 0
                 sql = '''select * from {} where PubDatetime >= '{}' and PubDatetime <= '{}' order by id limit {}, {};'''.format(
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
@@ -144,15 +144,12 @@ class GubaGenerator(SpiderBase):
                     if item:
                         items.append(item)
 
-                # items = []
-                # for data in datas:
-                #     item = self.post_api(data)
-                #     if item:
-                #         print(item)
-                #         items.append(item)
+                print(sql)
+                print(limit_start, len(items))
+                if items:
+                    self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+                    self.yuqing_client.end()
 
-                print(len(items))
-                self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                 if len(datas) == 0:
                     break
                 limit_start += 1
