@@ -43,6 +43,7 @@ class FinalAntSummary(SpiderBase):
         self.target_table = 'sf_secu_announcement_summary'
         self.tool_table = "secumain"
         self.trading_table = 'tradingday'
+        self.const_table = 'sf_const_announcement'
 
         self.start_time = start_time
         self.end_time = end_time
@@ -67,6 +68,12 @@ class FinalAntSummary(SpiderBase):
                 return day
             day -= datetime.timedelta(days=1)
 
+    def get_sentiment(self, event_code: str):
+        self._yuqing_init()
+        sql = '''select Sentiment from {} where EventCode = '{}'; '''.format(self.const_table, event_code)
+        sent = self.yuqing_client.select_one(sql).get("Sentiment")
+        return sent
+
     def launch(self):
         self.get_inner_code_map()
 
@@ -86,18 +93,19 @@ class FinalAntSummary(SpiderBase):
             inner_code = self.codes_map.get(secu_code)
             pub_day = datetime.datetime(pub_time.year, pub_time.month, pub_time.day)
             trade_day = self.get_nearest_trading_day(pub_day)
+            sentiment = self.get_sentiment(event_code)
 
             item = {}
             item['SecuCode'] = secu_code
             item['InnerCode'] = inner_code
-            item['TradeDate'] = ''
+            item['TradeDate'] = trade_day
             item['Sentiment'] = ''
             item['EventCode'] = event_code
             item['AnnID'] = ann_id
             item['AnnTitle'] = title
             item['Website'] = link
 
-            print(secu_code, inner_code, pub_time, pub_day, trade_day)
+            print(secu_code, inner_code, pub_time, pub_day, trade_day, sentiment)
             print(item)
 
             sys.exit(0)
