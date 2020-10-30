@@ -30,8 +30,14 @@ AnnID: dc_ann_event_source_ann_detail 中的 AnnID ;
 AnnTitle : dc_ann_event_source_ann_detail 中的 Title  ;
 Website: dc_ann_event_source_ann_detail 中的 PDFLink ;
 '''
+
 import datetime
+import os
 import sys
+
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
 
 from base_spider import SpiderBase
 
@@ -41,6 +47,7 @@ class FinalAntSummary(SpiderBase):
         super(FinalAntSummary, self).__init__()
         self.source_table = 'dc_ann_event_source_ann_detail'
         self.target_table = 'sf_secu_announcement_summary'
+        self.target_fields = ['InnerCode', 'SecuCode', 'TradeDate', 'Sentiment', 'EventCode', 'AnnID', 'AnnTitle', 'Website']
         self.tool_table = "secumain"
         self.trading_table = 'tradingday'
         self.const_table = 'sf_const_announcement'
@@ -76,12 +83,6 @@ class FinalAntSummary(SpiderBase):
                 return day
             day -= datetime.timedelta(days=1)
 
-    # def get_sentiment(self, event_code: str):
-    #     self._yuqing_init()
-    #     sql = '''select Sentiment from {} where EventCode = '{}'; '''.format(self.const_table, event_code)
-    #     sent = self.yuqing_client.select_one(sql).get("Sentiment")
-    #     return sent
-
     def launch(self):
         self.get_inner_code_map()
         self.get_sentiment_map()
@@ -92,7 +93,6 @@ class FinalAntSummary(SpiderBase):
         datas = self.yuqing_client.select_all(sql)
         items = []
         for data in datas:
-            print(data)
             ann_id = data.get("AnnID")
             pub_time = data.get("PubTime")
             event_code = data.get("EventCode")
@@ -113,15 +113,12 @@ class FinalAntSummary(SpiderBase):
             item['AnnID'] = ann_id
             item['AnnTitle'] = title
             item['Website'] = link
-
-            # print(secu_code, inner_code, pub_time, pub_day, trade_day, sentiment)
             print(item)
-            sys.exit(0)
             items.append(item)
 
+        print(len(items))
+        self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
 
 
 if __name__ == '__main__':
     FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).launch()
-    # print(FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).get_nearest_trading_day(datetime.datetime(2020, 11, 1)))
-    # FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).get_inner_code_map()
