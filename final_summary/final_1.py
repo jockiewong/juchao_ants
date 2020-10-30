@@ -92,8 +92,6 @@ Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
 """
-
-
 '''辅助用表: 
 (1) 公告事件常量表: 
 CREATE TABLE `sf_const_announcement` (
@@ -143,3 +141,11 @@ CREATE TABLE `dc_const_media_info` (
   UNIQUE KEY `un2` (`MedName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
+import datetime
+
+from base_spider import SpiderBase
+
+
+class FinalAntDetail(SpiderBase):
+    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
+        super(FinalAntDetail, self).__init__()
