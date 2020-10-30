@@ -22,6 +22,7 @@ SecuCode, InnerCode : 从 dc_ann_event_source_ann_detail 中的 SecuCode 生成;
 TradeDate: 从 dc_ann_event_source_ann_detail 中的 PubDate 可生成;
 生成规则: 如果公告的发布时间为交易日，则使用这一天。
 如果不是, 则使用之前最近的一个交易日。
+用到的表 tradingday
 
 Sentiment: 用 dc_ann_event_source_ann_detail 中的 EventCode 与 sf_const_announcement 关联取其中的 Sentiment ;
 EventCode: dc_ann_event_source_ann_detail 中的 EventCode;
