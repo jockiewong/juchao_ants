@@ -143,5 +143,3 @@ CREATE TABLE `dc_const_media_info` (
   UNIQUE KEY `un2` (`MedName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
-
-
