@@ -60,20 +60,32 @@ class FinalAntSummary(SpiderBase):
         self.get_inner_code_map()
 
         sql = '''select AnnID, SecuCode, PubTime, EventCode, Title, PDFLink from {} where PubTime  between '{}' and '{}'; '''.format(
-            self.source_table, datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30))
+            self.source_table, self.start_time, self.end_time)
         self._yuqing_init()
         datas = self.yuqing_client.select_all(sql)
         for data in datas:
             print(data)
             ann_id = data.get("AnnID")
             pub_time = data.get("PubTime")
-
+            event_code = data.get("EventCode")
+            title = data.get("Title")
+            link = data.get("PDFLink")
             secu_code = data.get("SecuCode")
+
             inner_code = self.codes_map.get(secu_code)
 
-
+            item = {}
+            item['SecuCode'] = secu_code
+            item['InnerCode'] = inner_code
+            item['TradeDate'] = ''
+            item['Sentiment'] = ''
+            item['EventCode'] = event_code
+            item['AnnID'] = ann_id
+            item['AnnTitle'] = title
+            item['Website'] = link
 
             print(secu_code, inner_code)
+            print(item)
 
             sys.exit(0)
 
