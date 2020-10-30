@@ -48,6 +48,7 @@ class FinalAntSummary(SpiderBase):
         self.start_time = start_time
         self.end_time = end_time
         self.codes_map = {}
+        self.sent_map = {}
 
     def get_inner_code_map(self):
         self._yuqing_init()
@@ -57,6 +58,13 @@ class FinalAntSummary(SpiderBase):
         ret = self.yuqing_client.select_all(sql)
         for r in ret:
             self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
+
+    def get_sentiment_map(self):
+        self._yuqing_init()
+        sql = '''select EventCode, Sentiment from {} ; '''.format(self.const_table)
+        ret = self.yuqing_client.select_all(sql)
+        for r in ret:
+            self.sent_map[r.get('EventCode')] = r.get("Sentiment")
 
     def get_nearest_trading_day(self, day: datetime.datetime):
         """获取距离当前时间最近的向前一个交易日 包括当前的日期"""
@@ -68,19 +76,21 @@ class FinalAntSummary(SpiderBase):
                 return day
             day -= datetime.timedelta(days=1)
 
-    def get_sentiment(self, event_code: str):
-        self._yuqing_init()
-        sql = '''select Sentiment from {} where EventCode = '{}'; '''.format(self.const_table, event_code)
-        sent = self.yuqing_client.select_one(sql).get("Sentiment")
-        return sent
+    # def get_sentiment(self, event_code: str):
+    #     self._yuqing_init()
+    #     sql = '''select Sentiment from {} where EventCode = '{}'; '''.format(self.const_table, event_code)
+    #     sent = self.yuqing_client.select_one(sql).get("Sentiment")
+    #     return sent
 
     def launch(self):
         self.get_inner_code_map()
+        self.get_sentiment_map()
 
         sql = '''select AnnID, SecuCode, PubTime, EventCode, Title, PDFLink from {} where PubTime  between '{}' and '{}'; '''.format(
             self.source_table, self.start_time, self.end_time)
         self._yuqing_init()
         datas = self.yuqing_client.select_all(sql)
+        items = []
         for data in datas:
             print(data)
             ann_id = data.get("AnnID")
@@ -93,22 +103,22 @@ class FinalAntSummary(SpiderBase):
             inner_code = self.codes_map.get(secu_code)
             pub_day = datetime.datetime(pub_time.year, pub_time.month, pub_time.day)
             trade_day = self.get_nearest_trading_day(pub_day)
-            sentiment = self.get_sentiment(event_code)
-
+            sentiment = self.sent_map.get(event_code)
             item = {}
             item['SecuCode'] = secu_code
             item['InnerCode'] = inner_code
             item['TradeDate'] = trade_day
-            item['Sentiment'] = ''
+            item['Sentiment'] = sentiment
             item['EventCode'] = event_code
             item['AnnID'] = ann_id
             item['AnnTitle'] = title
             item['Website'] = link
 
-            print(secu_code, inner_code, pub_time, pub_day, trade_day, sentiment)
+            # print(secu_code, inner_code, pub_time, pub_day, trade_day, sentiment)
             print(item)
-
             sys.exit(0)
+            items.append(item)
+
 
 
 if __name__ == '__main__':
