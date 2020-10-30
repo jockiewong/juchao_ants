@@ -42,6 +42,7 @@ class FinalAntSummary(SpiderBase):
         self.source_table = 'dc_ann_event_source_ann_detail'
         self.target_table = 'sf_secu_announcement_summary'
         self.tool_table = "secumain"
+        self.trading_table = 'tradingday'
 
         self.start_time = start_time
         self.end_time = end_time
@@ -55,6 +56,16 @@ class FinalAntSummary(SpiderBase):
         ret = self.yuqing_client.select_all(sql)
         for r in ret:
             self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
+
+    def get_nearest_trading_day(self, day: datetime.datetime):
+        """获取距离当前时间最近的向前一个交易日 包括当前的日期"""
+        self._yuqing_init()
+        while True:
+            sql = '''select IfTradingDay from {} where Date = '{}' and SecuMarket = 83 ; '''.format(self.trading_table, day)
+            is_trading_day = self.yuqing_client.select_one(sql).get("IfTradingDay")
+            if is_trading_day == 1:
+                return day
+            day -= datetime.timedelta(days=1)
 
     def launch(self):
         self.get_inner_code_map()
@@ -73,6 +84,8 @@ class FinalAntSummary(SpiderBase):
             secu_code = data.get("SecuCode")
 
             inner_code = self.codes_map.get(secu_code)
+            pub_day = datetime.datetime(pub_time.year, pub_time.month, pub_time.day)
+            trade_day = self.get_nearest_trading_day(pub_day)
 
             item = {}
             item['SecuCode'] = secu_code
@@ -84,7 +97,7 @@ class FinalAntSummary(SpiderBase):
             item['AnnTitle'] = title
             item['Website'] = link
 
-            print(secu_code, inner_code)
+            print(secu_code, inner_code, pub_time, pub_day, trade_day)
             print(item)
 
             sys.exit(0)
@@ -92,4 +105,5 @@ class FinalAntSummary(SpiderBase):
 
 if __name__ == '__main__':
     FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).launch()
+    # print(FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).get_nearest_trading_day(datetime.datetime(2020, 11, 1)))
     # FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).get_inner_code_map()
