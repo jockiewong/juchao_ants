@@ -141,11 +141,17 @@ CREATE TABLE `dc_const_media_info` (
   UNIQUE KEY `un2` (`MedName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
-import datetime
-
 from base_spider import SpiderBase
 
 
 class FinalAntDetail(SpiderBase):
-    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(self):
         super(FinalAntDetail, self).__init__()
+
+    def launch(self):
+
+        pass
+
+
+if __name__ == '__main__':
+    FinalAntDetail().launch()

@@ -134,11 +134,11 @@ class LaunchSpider(SpiderBase):
 if __name__ == '__main__':
     LaunchSpider().launch()
     # AntSpider().start()
-    AntSpider().ding_inc_count()
+    # AntSpider().ding_inc_count()
 
     # schedule.every(20).minutes.do(AntSpider().start)
     schedule.every(10).minutes.do(LaunchSpider().launch)
-    schedule.every(5).hours.do(AntSpider().ding_inc_count)
+    # schedule.every(5).hours.do(AntSpider().ding_inc_count)
 
     while True:
         schedule.run_pending()
