@@ -87,8 +87,7 @@ PubDate -  由 PubDatetime 可生成;
 PubDatetime - dc_ann_event_source_ann_detail 中的 PubTime;
 NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇数 select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
 PostNum - 统计股吧发布时间在公告发布时间之后的所有关联贴数 同上
-IndustryCode - 取主题猎手数据库 select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr
-from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
+IndustryCode - 取主题猎手数据库 select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
 Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
@@ -125,7 +124,24 @@ CREATE TABLE `sf_const_announcement` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='常量表-公告事件' ; 
 
 
-
+CREATE TABLE `dc_const_media_info` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `MedCode` varchar(100) NOT NULL COMMENT '媒体编码',
+  `MedName` varchar(100) NOT NULL COMMENT '媒体名称',
+  `InfluenceWeight` int(11) DEFAULT NULL COMMENT '影响力权重',
+  `WebType1` varchar(100) DEFAULT NULL COMMENT '网站性质:L1-政府官方网站，L2-影响力较高的网站,L3-行业深度网站,L4-财经门户网站',
+  `WebType2` varchar(100) DEFAULT NULL COMMENT '媒体类别',
+  `Website` varchar(1000) DEFAULT NULL COMMENT '网站首页链接',
+  `IfGetIn` tinyint(4) DEFAULT NULL COMMENT '爬虫是否已接入(1-已接入，0-未接入)',
+  `BeginDate` datetime DEFAULT NULL COMMENT '爬虫开始接入日期',
+  `EndDate` datetime DEFAULT NULL COMMENT '爬虫结束接入日期',
+  `IsValid` tinyint(4) NOT NULL DEFAULT 1 COMMENT '是否有效',
+  `CreateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `UpdateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `un1` (`MedCode`),
+  UNIQUE KEY `un2` (`MedName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
 
 
