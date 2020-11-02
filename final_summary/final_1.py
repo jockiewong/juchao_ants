@@ -9,7 +9,7 @@ CREATE TABLE `sf_secu_announcement_detail` (
   `PubDatetime` datetime NOT NULL COMMENT '发布时间(精确到秒)(与PubDate字段不冲突)',
   `NewsNum` int(11) NOT NULL COMMENT '新闻转载次数',
   `PostNum` int(11) NOT NULL COMMENT '股民讨论次数',
-  `IndustryCode` varchar(100) NOT NULL COMMENT '经传行业代码',
+  `IndustryCode` varchar(100) DEFATLT NULL COMMENT '经传行业代码',
   `Website` varchar(200) NOT NULL COMMENT '公告网址',
   `Influence` bigint(20) DEFAULT NULL COMMENT '影响力',
   `IfShow` tinyint(4) NOT NULL DEFAULT 1 COMMENT '软件是否展示：0-不展示，1-展示',
@@ -89,7 +89,8 @@ NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇�
 select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
 
 PostNum - 统计股吧发布时间在公告发布时间之后的所有关联贴数 同上
-IndustryCode - 取主题猎手数据库 select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
+IndustryCode - 取主题猎手数据库
+select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
 Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
@@ -273,11 +274,12 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             item['PubDatetime'] = pub_time
             item['PubDate'] = pub_date
             item['Website'] = link
-            if industry_code:
-                item['IndustryCode'] = inner_code
-            else:
-                self.log(data)
-                continue
+            item['IndustryCode'] = industry_code
+            # if industry_code:
+            #     item['IndustryCode'] = industry_code
+            # else:
+            #     self.log(data)
+            #     continue
             item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_time)
             item['PostNum'] = self.get_post_num(secu_code, event_code, pub_time)
             item['Influence'] = self.get_influence(item)
