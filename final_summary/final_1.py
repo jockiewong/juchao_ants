@@ -85,10 +85,11 @@ SecuCode - dc_ann_event_source_ann_detail 中的 SecuCode;
 EventCode - dc_ann_event_source_ann_detail 中的 EventCode 关联 sf_const_announcement ;
 PubDate -  由 PubDatetime 可生成;
 PubDatetime - dc_ann_event_source_ann_detail 中的 PubTime;
-NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇数
+NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，最多统计发布日(包括当日)之后的 5 个交易日之间的新闻，
+超过 5 个交易日就不需要去更新这条记录了。
 select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
 
-PostNum - 统计股吧发布时间在公告发布时间之后的所有关联贴数 同上
+PostNum - 统计股吧发布时间在公告发布时间之后的所有关联贴数 要求同上
 IndustryCode - 取主题猎手数据库
 select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
 Website - dc_ann_event_source_ann_detail 中的 PDFLink;
@@ -232,6 +233,8 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             self.industry_map[r.get("SecuCode")] = r.get("IndustryCode")
 
     def get_news_num(self, secu_code: str, event_code: str, pub_time: datetime.datetime):
+        self._yuqing_init()
+
         # ...
         return 1
 
@@ -275,17 +278,10 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             item['PubDate'] = pub_date
             item['Website'] = link
             item['IndustryCode'] = industry_code
-            # if industry_code:
-            #     item['IndustryCode'] = industry_code
-            # else:
-            #     self.log(data)
-            #     continue
             item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_time)
             item['PostNum'] = self.get_post_num(secu_code, event_code, pub_time)
             item['Influence'] = self.get_influence(item)
             print(item)
-            # sys.exit(0)
-            # self._save(self.yuqing_client, item, self.target_table, self.target_fields)
             items.append(item)
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
 
