@@ -85,7 +85,9 @@ SecuCode - dc_ann_event_source_ann_detail 中的 SecuCode;
 EventCode - dc_ann_event_source_ann_detail 中的 EventCode 关联 sf_const_announcement ;
 PubDate -  由 PubDatetime 可生成;
 PubDatetime - dc_ann_event_source_ann_detail 中的 PubTime;
-NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇数 select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
+NewsNum - 统计新闻发布时间在公告发布时间之后的所有关联篇数
+select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
+
 PostNum - 统计股吧发布时间在公告发布时间之后的所有关联贴数 同上
 IndustryCode - 取主题猎手数据库 select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, B.name as SecuAbbr from block A, block_code B where B.code = 'SH600000' and A.type = 1 and A.id = B.bid ;
 Website - dc_ann_event_source_ann_detail 中的 PDFLink;
@@ -156,6 +158,9 @@ class FinalAntDetail(SpiderBase):
     def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
         super(FinalAntDetail, self).__init__()
         self.source_table = 'dc_ann_event_source_ann_detail'
+        self.target_table = 'sf_secu_announcement_detail'
+        self.target_fields = ['InnerCode', 'SecuCode', 'EventCode', 'PubDate', 'PubDatetime',
+                              'NewsNum', 'PostNum', 'IndustryCode', 'Website', 'Influence']
         self.tool_table = "secumain"
         self.codes_map = {}
         self.industry_map = {}
@@ -182,6 +187,17 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         ret = self.theme_client.select_all(sql)
         for r in ret:
             self.industry_map[r.get("SecuCode")] = r.get("IndustryCode")
+
+    def get_news_num(self, secu_code: str, event_code: str, pub_time: datetime.datetime):
+        # ...
+        return 1
+
+    def get_post_num(self, secu_code: str, event_code: str, pub_time: datetime.datetime):
+        # .. .
+        return 1
+
+    def get_influence(self, item: dict):
+        return 100
 
     def launch(self):
         self.get_inner_code_map()
@@ -211,8 +227,14 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             item['PubDate'] = pub_date
             item['Website'] = link
             item['IndustryCode'] = self.industry_map.get(secu_code)
+            item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_time)
+            item['PostNum'] = self.get_post_num(secu_code, event_code, pub_time)
+            item['Influence'] = self.get_influence(item)
             print(item)
+            sys.exit(0)
+            # self._save(self.yuqing_client, item, self.target_table, self.target_fields)
             items.append(item)
+        self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
 
 
 if __name__ == '__main__':
@@ -222,7 +244,4 @@ if __name__ == '__main__':
     # fa.get_inner_code_map()
     # print(fa.codes_map)
     # fa.get_industry_code_map()
-
     fa.launch()
-
-    pass
