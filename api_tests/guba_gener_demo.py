@@ -123,20 +123,23 @@ class GubaGenerator(SpiderBase):
     def launch(self):
         self._yuqing_init()
         end_time = datetime.datetime(2020, 10, 1)
-        start_time = datetime.datetime(2019, 10, 1)
+        start_time = datetime.datetime(2020, 9, 5)
 
         dt = start_time
         while dt <= end_time:
             dt_next = dt + datetime.timedelta(days=1)
 
             limit_start = 0
-            while True:
-                sql = '''select * from {} where PubDatetime >= '{}' and PubDatetime <= '{}' order by id limit {}, {};'''.format(
+            while True:  # TODO 1002 东财 1007 同花顺
+                sql = '''select * from {} where OrgTableCode = '1002' and PubDatetime >= '{}' and PubDatetime <= '{}' order by id limit {}, {};'''.format(
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
-                datas = self.yuqing_client.select_all(sql)
                 print(sql)
+                datas = self.yuqing_client.select_all(sql)
                 print("select datas: ", len(datas))
+
+                if len(datas) == 0:
+                    break
 
                 items = []
                 with ThreadPoolExecutor(max_workers=10) as t:
@@ -151,8 +154,6 @@ class GubaGenerator(SpiderBase):
                     self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                     self.yuqing_client.end()
 
-                if len(datas) == 0:
-                    break
                 limit_start += 1
             dt = dt_next
 

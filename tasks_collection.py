@@ -30,7 +30,7 @@ python scripts/trans_2tl.py
 
 '''guba 
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
--itd --name test --env LOCAL=1  --env VPN=1 \
+-itd --name guba --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
 python api_tests/guba_gener_demo.py
 '''
@@ -41,4 +41,11 @@ sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
 python api_tests/news_gener_demo.py
 
+'''
+
+'''ann 
+sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
+-itd --name ann --env LOCAL=1  --env VPN=1 \
+registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
+python api_tests/ann_gener_demo.py
 '''

@@ -9,6 +9,7 @@ import timeit
 from concurrent.futures._base import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
+import schedule
 import requests
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
@@ -221,11 +222,20 @@ def time_schedule():
         _dt = _dt - datetime.timedelta(days=_interval)
 
 
+def my_task():
+    try:
+        time_schedule()
+    except:
+        traceback.print_exc()
+        time.sleep(10)
+
+
 if __name__ == '__main__':
-    time_schedule()
+    my_task()
 
-    # ip_schedule()
+    # schedule.every(5).hour.do(my_task)
 
-    # api_test()
-
-    pass
+    # while True:
+    #     schedule.run_pending()
+    #
+    #     time.sleep(20)
