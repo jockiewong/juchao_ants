@@ -25,6 +25,7 @@ class NewsGenerator(SpiderBase):
     CREATE TABLE `dc_ann_event_source_news_detail` (
       `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
       `NewsID` bigint(20) NOT NULL COMMENT '新闻主表ID',
+      `MedName` varchar(100) DEFAULT NULL COMMENT '媒体名称',
       `PubTime` datetime NOT NULL COMMENT '发布时间（精确到秒）',
       `Title` varchar(500) DEFAULT NULL COMMENT '标题',
       `Website` varchar(1000) DEFAULT NULL COMMENT '网址',
@@ -98,6 +99,7 @@ class NewsGenerator(SpiderBase):
                 ret = body.get("event_news")[0]
                 item = {}
                 item['NewsID'] = data.get("NEWS_ID")
+                item['MedName'] = data.get("NEWS_ORIGIN_SOURCE")
                 item['PubTime'] = data.get('NEWS_PUBLISH_TIME')
                 item['Title'] = data.get("NEWS_TITLE")
                 item['Website'] = data.get("NEWS_PUBLISH_SITE")
@@ -120,13 +122,13 @@ class NewsGenerator(SpiderBase):
 
         max_id, min_id = self.select_max_title_id()
         # min_id = 60510000
-        min_id = 61070000
+        # min_id = 61070000
         print(max_id, " ", min_id)
         for i in range(min_id // self.batch_num, max_id // self.batch_num + 1):
             news_id_start = self.batch_num * i
             news_id_end = self.batch_num * (i+1)
             print(news_id_start, news_id_end)
-            sql = '''select T.NEWS_ID, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
+            sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_ID >= {} and T.NEWS_ID <= {} \
 and B.NEWS_ID >= {} and B.NEWS_ID <= {}  \
