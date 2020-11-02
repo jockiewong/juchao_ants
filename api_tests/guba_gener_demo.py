@@ -64,7 +64,8 @@ class GubaGenerator(SpiderBase):
 
     def __init__(self):
         super(GubaGenerator, self).__init__()
-        self.source_table = 'guba_base'
+        # self.source_table = 'guba_base'
+        self.source_table = 'guba_base20201031'
         self.target_table = 'dc_ann_event_source_guba_detail'
         self.target_fields = ['GubaID', 'PubTime', 'Title', 'Website', 'SecuCode', 'EventCode',
                               'EventName', 'Position']
@@ -121,9 +122,8 @@ class GubaGenerator(SpiderBase):
 
     def launch(self):
         self._yuqing_init()
-        end_time = datetime.datetime(2020, 10, 24)
-        # start_time = end_time - datetime.timedelta(days=185)
-        start_time = end_time - datetime.timedelta(days=1)
+        end_time = datetime.datetime(2020, 10, 1)
+        start_time = datetime.datetime(2019, 10, 1)
 
         dt = start_time
         while dt <= end_time:
@@ -135,6 +135,8 @@ class GubaGenerator(SpiderBase):
                     self.source_table, dt, dt_next, limit_start*self.batch_num, self.batch_num,
                 )
                 datas = self.yuqing_client.select_all(sql)
+                print(sql)
+                print("select datas: ", len(datas))
 
                 items = []
                 with ThreadPoolExecutor(max_workers=10) as t:
@@ -144,7 +146,6 @@ class GubaGenerator(SpiderBase):
                     if item:
                         items.append(item)
 
-                print(sql)
                 print(limit_start, len(items))
                 if items:
                     self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
