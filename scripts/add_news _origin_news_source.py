@@ -36,4 +36,34 @@ CREATE TABLE `dc_ann_event_source_news_detail` (
   KEY `k1` (`NewsID`,`PubTime`,`SecuCode`,`EventCode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告舆情事件明细-新闻源';
 '''
+import os
+import sys
 
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
+
+from base_spider import SpiderBase
+
+
+class MedNameUpdate(SpiderBase):
+    def __init__(self):
+        super(MedNameUpdate, self).__init__()
+
+    def launch(self):
+        self._tonglian_init()
+        self._yuqing_init()
+        sql = '''select distinct(NewsID) from dc_ann_event_source_news_detail; '''
+        news_id_list = self.yuqing_client.select_all(sql)
+        news_id_list = tuple([one.get("NewsID") for one in news_id_list])
+        news_medname_map = {}
+        sql2 = '''select NEWS_ID, NEWS_ORIGIN_SOURCE from vnews_content_v1 where NEWS_ID in {}; '''.format(news_id_list)
+        ret = self.tonglian_client.select_all(sql2)
+        for r in ret:
+            news_medname_map[r.get("NEWS_ID")] = r.get("NEWS_ORIGIN_SOURCE")
+
+        print(news_medname_map)
+
+
+if __name__ == '__main__':
+    MedNameUpdate().launch()
