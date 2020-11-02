@@ -72,10 +72,11 @@ class MedNameUpdate(SpiderBase):
         with open("news_medname.json", 'r') as f:
             news_medname_map = json.loads(f.read())
 
-        # print(news_medname_map)
+        news_med_list = list(news_medname_map.items())
+        order_news_med_list = sorted(news_med_list, key=lambda one: int(one[0]))
 
         self._yuqing_init()
-        for news_id, news_med_name in news_medname_map.items():
+        for news_id, news_med_name in order_news_med_list:
             print(news_id)
             print(news_med_name)
             if news_med_name is not None:
