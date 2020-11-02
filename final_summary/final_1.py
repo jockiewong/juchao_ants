@@ -171,6 +171,9 @@ class FinalAntDetail(SpiderBase):
         for r in ret:
             self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
 
+    def get_day(self, dt: datetime.datetime):
+        return datetime.datetime(dt.year, dt.month, dt.day)
+
     def launch(self):
         self.get_inner_code_map()
 
@@ -187,23 +190,18 @@ class FinalAntDetail(SpiderBase):
             inner_code = self.codes_map.get(secu_code)
             event_code = data.get("EventCode")
             pub_time = data.get("PubTime")
+            pub_date = self.get_day(pub_time)
             link = data.get("PDFLink")
 
-            print(secu_code)
-            print(inner_code)
-            print(event_code)
-            print(pub_time)
-            print(link)
-
-
-
             item = {}
-
-
-
-
-
-        pass
+            item['SecuCode'] = secu_code
+            item['InnerCode'] = inner_code
+            item['EventCode'] = event_code
+            item['PubDatetime'] = pub_time
+            item['PubDate'] = pub_date
+            item['Website'] = link
+            print(item)
+            items.append(item)
 
 
 if __name__ == '__main__':
