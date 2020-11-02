@@ -172,6 +172,7 @@ class FinalAntDetail(SpiderBase):
             self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
 
     def launch(self):
+        self.get_inner_code_map()
 
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
@@ -179,6 +180,25 @@ class FinalAntDetail(SpiderBase):
         print(sql)
         datas = self.yuqing_client.select_all(sql)
         print(len(datas))
+
+        items = []
+        for data in datas:
+            secu_code = data.get("SecuCode")
+            inner_code = self.codes_map.get(secu_code)
+            event_code = data.get("EventCode")
+            pub_time = data.get("PubTime")
+            link = data.get("PDFLink")
+
+            print(secu_code)
+            print(inner_code)
+            print(event_code)
+            print(pub_time)
+            print(link)
+
+
+
+            item = {}
+
 
 
 
