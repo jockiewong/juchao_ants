@@ -141,7 +141,13 @@ CREATE TABLE `dc_const_media_info` (
   UNIQUE KEY `un2` (`MedName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
+import os
+import sys
 import datetime
+
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
 
 from base_spider import SpiderBase
 
