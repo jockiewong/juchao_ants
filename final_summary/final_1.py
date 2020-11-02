@@ -141,15 +141,20 @@ CREATE TABLE `dc_const_media_info` (
   UNIQUE KEY `un2` (`MedName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
 '''
+import datetime
+
 from base_spider import SpiderBase
 
 
 class FinalAntDetail(SpiderBase):
-    def __init__(self):
+    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
         super(FinalAntDetail, self).__init__()
         self.source_table = 'dc_ann_event_source_ann_detail'
         self.tool_table = "secumain"
         self.codes_map = {}
+
+        self.start_time = start_time
+        self.end_time = end_time
 
     def get_inner_code_map(self):
         self._yuqing_init()
@@ -161,7 +166,14 @@ class FinalAntDetail(SpiderBase):
             self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
 
     def launch(self):
+
         self._yuqing_init()
+        sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
+            self.source_table, self.start_time, self.end_time)
+        print(sql)
+        datas = self.yuqing_client.select_all(sql)
+        print(len(datas))
+
 
 
 
@@ -169,10 +181,12 @@ class FinalAntDetail(SpiderBase):
 
 
 if __name__ == '__main__':
-    fa = FinalAntDetail()
-    fa.get_inner_code_map()
-    print(fa.codes_map)
+    _start_time = datetime.datetime(2020, 7, 30)
+    _end_time = datetime.datetime(2020, 10, 30)
+    fa = FinalAntDetail(_start_time, _end_time)
+    # fa.get_inner_code_map()
+    # print(fa.codes_map)
 
-    # FinalAntDetail().launch()
+    fa.launch()
 
     pass
