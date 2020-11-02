@@ -23,7 +23,8 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      PROXY_URL, TEST_MYSQL_HOST, TEST_MYSQL_PORT, TEST_MYSQL_USER, TEST_MYSQL_PASSWORD,
                      TEST_MYSQL_DB, SPIDER_MYSQL_HOST2, SPIDER_MYSQL_PORT2, SPIDER_MYSQL_USER2,
                      SPIDER_MYSQL_PASSWORD2, SPIDER_MYSQL_DB2, YQ_HOST, YQ_PORT, YQ_USER, YQ_PASSWD,
-                     YQ_DB, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB)
+                     YQ_DB, TL_HOST, TL_PORT, TL_USER, TL_PASSWD, TL_DB, THE_HOST, THE_PORT, THE_USER,
+                     THE_PASSWD, THE_DB)
 from sql_pool import PyMysqlPoolBase
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -103,6 +104,15 @@ class SpiderBase(object):
         "db": YQ_DB,
     }
 
+    # 主题猎手数据库
+    theme_cfg = {
+        "host": THE_HOST,
+        "port": THE_PORT,
+        "user": THE_USER,
+        "password": THE_PASSWD,
+        "db": THE_DB,
+    }
+
     def __init__(self):
         self.test_client = None
         self.dc_client = None
@@ -112,6 +122,7 @@ class SpiderBase(object):
         self.tonglian_client = None
         self.yuqing_client = None
         self.r_spider_client = None
+        self.theme_client = None
 
         self.proxy_pool = []
         self.cur_proxy = None
@@ -157,12 +168,15 @@ class SpiderBase(object):
         if not self.yuqing_client:
             self.yuqing_client = self._init_pool(self.yuqing_cfg)
 
+    def _theme_init(self):
+        if not self.theme_client:
+            self.theme_client= self._init_pool(self.theme_cfg)
+
     def __del__(self):
         """结束时销毁已经存在的数据库连接"""
         for _client in (self.dc_client, self.product_client, self.juyuan_client,
                         self.spider_client, self.test_client, self.yuqing_client,
-                        self.tonglian_client,
-                        self.r_spider_client,
+                        self.tonglian_client, self.r_spider_client, self.theme_client,
                         ):
             if _client is not None:
                 _client.dispose()
