@@ -158,6 +158,7 @@ class FinalAntDetail(SpiderBase):
         self.source_table = 'dc_ann_event_source_ann_detail'
         self.tool_table = "secumain"
         self.codes_map = {}
+        self.industry_map = {}
 
         self.start_time = start_time
         self.end_time = end_time
@@ -174,8 +175,17 @@ class FinalAntDetail(SpiderBase):
     def get_day(self, dt: datetime.datetime):
         return datetime.datetime(dt.year, dt.month, dt.day)
 
+    def get_industry_code_map(self):
+        self._theme_init()
+        sql = '''select A.code as IndustryCode, A.name as IndustryName, B.code as SecuCode, \
+B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid ;'''
+        ret = self.theme_client.select_all(sql)
+        for r in ret:
+            self.industry_map[r.get("SecuCode")] = r.get("IndustryCode")
+
     def launch(self):
         self.get_inner_code_map()
+        self.get_industry_code_map()
 
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
@@ -200,6 +210,7 @@ class FinalAntDetail(SpiderBase):
             item['PubDatetime'] = pub_time
             item['PubDate'] = pub_date
             item['Website'] = link
+            item['IndustryCode'] = self.industry_map.get(secu_code)
             print(item)
             items.append(item)
 
@@ -210,6 +221,7 @@ if __name__ == '__main__':
     fa = FinalAntDetail(_start_time, _end_time)
     # fa.get_inner_code_map()
     # print(fa.codes_map)
+    # fa.get_industry_code_map()
 
     fa.launch()
 
