@@ -259,12 +259,22 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
     def get_meds_scores(self, meds: list):
         # 计算媒体得分 得分有 1 3 10 100
-        self._yuqing_init()
-        sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(meds))
-        ret = self.yuqing_client.select_all(sql)
-        scores = [int(r.get("InfluenceWeight", 1)) for r in ret]
-        print(scores)
-        total_score = sum(scores)
+        total_score = 0
+
+        for med in meds:
+            if med is None:
+                total_score += 1
+                meds.remove(med)
+
+        if len(meds) != 0:
+            self._yuqing_init()
+            sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(meds))
+            print(sql)
+            ret = self.yuqing_client.select_all(sql)
+            scores = [int(r.get("InfluenceWeight")) for r in ret]
+            print(scores)
+            total_score += sum(scores)
+
         return total_score
 
     def get_news_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
@@ -283,6 +293,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         total_scores = 0
         if count != 0:
             meds = [data.get("MedName") for data in datas]
+            print("meds:", meds)
             total_scores = self.get_meds_scores(meds)
         return count, total_scores
 
@@ -307,9 +318,9 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
             self.source_table, self.start_time, self.end_time)
-        print(sql)
+        # print(sql)
         datas = self.yuqing_client.select_all(sql)
-        print(len(datas))
+        # print(len(datas))
 
         items = []
         for data in datas:
