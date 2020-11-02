@@ -147,11 +147,32 @@ from base_spider import SpiderBase
 class FinalAntDetail(SpiderBase):
     def __init__(self):
         super(FinalAntDetail, self).__init__()
+        self.source_table = 'dc_ann_event_source_ann_detail'
+        self.tool_table = "secumain"
+        self.codes_map = {}
+
+    def get_inner_code_map(self):
+        self._yuqing_init()
+        sql = '''select SecuCode, InnerCode from {} where SecuCode in (select distinct(SecuCode) from {}); '''.format(
+            self.tool_table, self.source_table,
+        )
+        ret = self.yuqing_client.select_all(sql)
+        for r in ret:
+            self.codes_map[r.get('SecuCode')] = r.get('InnerCode')
 
     def launch(self):
+        self._yuqing_init()
+
+
 
         pass
 
 
 if __name__ == '__main__':
-    FinalAntDetail().launch()
+    fa = FinalAntDetail()
+    fa.get_inner_code_map()
+    print(fa.codes_map)
+
+    # FinalAntDetail().launch()
+
+    pass
