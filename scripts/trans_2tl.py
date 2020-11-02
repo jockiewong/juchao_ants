@@ -2,6 +2,7 @@ import datetime
 import os
 import sys
 import time
+import traceback
 
 import schedule
 
@@ -163,7 +164,11 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
 
 
 def task():
-    MergeBase().start()
+    try:
+        MergeBase().start()
+    except:
+        traceback.print_exc()
+        time.sleep(10)
     for i in range(5):
         print()
 
