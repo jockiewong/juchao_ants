@@ -276,7 +276,6 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         return count
 
     def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
-        # .. .
         return 1
 
     def get_influence(self, item: dict):
