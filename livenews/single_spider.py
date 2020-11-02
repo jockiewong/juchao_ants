@@ -3,6 +3,8 @@ import json
 import os
 import sys
 import time
+import traceback
+
 import requests
 import schedule
 from retrying import retry
@@ -129,8 +131,15 @@ class SingleJuchaoDayNews(SpiderBase):
             _day += datetime.timedelta(days=1)
 
 
+def my_task():
+    try:
+        SingleJuchaoDayNews().start()
+    except:
+        traceback.print_exc()
+
+
 if __name__ == '__main__':
-    schedule.every(30).seconds.do(SingleJuchaoDayNews().start)
+    schedule.every(30).seconds.do(my_task)
 
     while True:
         schedule.run_pending()
