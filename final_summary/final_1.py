@@ -206,6 +206,7 @@ class FinalAntDetail(SpiderBase):
         self.target_fields = ['InnerCode', 'SecuCode', 'EventCode', 'PubDate', 'PubDatetime',
                               'NewsNum', 'PostNum', 'IndustryCode', 'Website', 'Influence']
         self.tool_table = "secumain"
+        self.trading_table = 'tradingday'
         self.codes_map = {}
         self.industry_map = {}
 
@@ -232,13 +233,42 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         for r in ret:
             self.industry_map[r.get("SecuCode")] = r.get("IndustryCode")
 
-    def get_news_num(self, secu_code: str, event_code: str, pub_time: datetime.datetime):
+    def get_nearest_trading_day(self, day: datetime.datetime, direction: str = 'before'):
         self._yuqing_init()
+        while True:
+            sql = '''select IfTradingDay from {} where Date = '{}' and SecuMarket = 83 ; '''.format(self.trading_table, day)
+            is_trading_day = self.yuqing_client.select_one(sql).get("IfTradingDay")
+            if is_trading_day == 1:
+                return day
+            if direction == 'before':
+                day -= datetime.timedelta(days=1)
+            else:
+                day += datetime.timedelta(days=1)
+
+    def get_after_five_trading_days(self, dt: datetime.datetime):
+        """当日（包括当日之后的）5 个交易日"""
+        trading_days = set()
+        while True:
+            trading_day = self.get_nearest_trading_day(dt, direction='after')
+            trading_days.add(trading_day)
+            if len(trading_days) == 5:
+                break
+            dt += datetime.timedelta(days=1)
+        return sorted(list(trading_days))
+
+    def get_news_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
+        """
+        统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
+        最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
+        select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
+        """
+        self._yuqing_init()
+        trading_days = self.get_after_five_trading_days(pub_date)
 
         # ...
         return 1
 
-    def get_post_num(self, secu_code: str, event_code: str, pub_time: datetime.datetime):
+    def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
         # .. .
         return 1
 
@@ -278,8 +308,8 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             item['PubDate'] = pub_date
             item['Website'] = link
             item['IndustryCode'] = industry_code
-            item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_time)
-            item['PostNum'] = self.get_post_num(secu_code, event_code, pub_time)
+            item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_date)
+            item['PostNum'] = self.get_post_num(secu_code, event_code, pub_date)
             item['Influence'] = self.get_influence(item)
             print(item)
             items.append(item)
@@ -293,4 +323,9 @@ if __name__ == '__main__':
     # fa.get_inner_code_map()
     # print(fa.codes_map)
     # fa.get_industry_code_map()
-    fa.launch()
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 1)))
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 2)))
+    print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 5)))
+
+    # fa.launch()
