@@ -75,15 +75,12 @@ class MedNameUpdate(SpiderBase):
         # print(news_medname_map)
 
         self._yuqing_init()
-        # length = 0
         for news_id, news_med_name in news_medname_map.items():
             print(news_id)
             print(news_med_name)
-            sql = '''update dc_ann_event_source_news_detail set MedName = '{}' where NewsID = {};'''.format(news_med_name, news_id)
-            self.yuqing_client.update(sql)
-            # length += 1
-            # if length == 2:
-            #     sys.exit(0)
+            if news_med_name is not None:
+                sql = '''update dc_ann_event_source_news_detail set MedName = '{}' where NewsID = {};'''.format(news_med_name, news_id)
+                self.yuqing_client.update(sql)
 
 
 if __name__ == '__main__':
