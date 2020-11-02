@@ -51,7 +51,7 @@ class MedNameUpdate(SpiderBase):
     def __init__(self):
         super(MedNameUpdate, self).__init__()
 
-    def launch(self):
+    def write_json(self):
         self._tonglian_init()
         self._yuqing_init()
         sql = '''select distinct(NewsID) from dc_ann_event_source_news_detail; '''
@@ -61,10 +61,29 @@ class MedNameUpdate(SpiderBase):
         sql2 = '''select NEWS_ID, NEWS_ORIGIN_SOURCE from vnews_content_v1 where NEWS_ID in {}; '''.format(news_id_list)
         ret = self.tonglian_client.select_all(sql2)
         for r in ret:
+            print(r)
             news_medname_map[r.get("NEWS_ID")] = r.get("NEWS_ORIGIN_SOURCE")
-        # print(news_medname_map)
         with open("news_medname.json", "w") as f:
             f.write(json.dumps(news_medname_map, indent=4))
+
+    def launch(self):
+        # self.write_json()
+
+        with open("news_medname.json", 'r') as f:
+            news_medname_map = json.loads(f.read())
+
+        # print(news_medname_map)
+
+        self._yuqing_init()
+        # length = 0
+        for news_id, news_med_name in news_medname_map.items():
+            print(news_id)
+            print(news_med_name)
+            sql = '''update dc_ann_event_source_news_detail set MedName = '{}' where NewsID = {};'''.format(news_med_name, news_id)
+            self.yuqing_client.update(sql)
+            # length += 1
+            # if length == 2:
+            #     sys.exit(0)
 
 
 if __name__ == '__main__':
