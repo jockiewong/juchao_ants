@@ -258,7 +258,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         return sorted(list(trading_days))
 
     def get_meds_scores(self, meds: list):
-        # 计算媒体得分
+        # 计算媒体得分 得分有 1 3 10 100
         self._yuqing_init()
         sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(meds))
         ret = self.yuqing_client.select_all(sql)
@@ -287,10 +287,14 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         return count, total_scores
 
     def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
-        return 1
-
-    def get_influence(self, item: dict):
-        return 100
+        # TODO 放在外面
+        self._yuqing_init()
+        trading_days = self.get_after_five_trading_days(pub_date)
+        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
+        sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
+        count = self.yuqing_client.select_one(sql).get("count")
+        return count
 
     def log(self, data):
         with open("final_1.log", "a") as f:
@@ -327,9 +331,10 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             item['PubDate'] = pub_date
             item['Website'] = link
             item['IndustryCode'] = industry_code
-            item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_date)
+            news_num, scores = self.get_news_num(secu_code, event_code, pub_date)
+            item['NewsNum'] = news_num
+            item['Influence'] = scores
             item['PostNum'] = self.get_post_num(secu_code, event_code, pub_date)
-            item['Influence'] = self.get_influence(item)
             print(item)
             items.append(item)
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
