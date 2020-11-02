@@ -47,9 +47,15 @@ def api_test(thread_num):
             # print(resp.text)
             pass
 
+    def baidu_test():
+        resp = requests.get("https://www.baidu.com")
+        if resp and resp.status_code == 200:
+            return True
+
     _threads = []
     for i in range(thread_num):
-        t = threading.Thread(target=work_test, name="T" + str(i))
+        # t = threading.Thread(target=work_test, name="T" + str(i))
+        t = threading.Thread(target=baidu_test, name="T" + str(i))
         t.setDaemon(True)
         _threads.append(t)
     for t in _threads:
