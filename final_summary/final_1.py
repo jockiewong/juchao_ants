@@ -260,13 +260,20 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         """
         统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
         最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
-        select * from dc_ann_event_source_news_detail A where A.SecuCode = 'code' and A.EventCode = 'eventcode' and PubTime between {} amd {} ;
+        select * from dc_ann_event_source_news_detail A where A.SecuCode = '{}' and A.EventCode = '{}' and PubTime between {} amd {} ;
         """
         self._yuqing_init()
         trading_days = self.get_after_five_trading_days(pub_date)
-
-        # ...
-        return 1
+        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
+        sql = '''select * from dc_ann_event_source_news_detail where SecuCode = '{}' \
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
+        print(sql)
+        datas = self.yuqing_client.select_all(sql)
+        print(len(datas))
+        count = len(datas)
+        for data in datas:
+            print(data)
+        return count
 
     def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
         # .. .
@@ -292,6 +299,8 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
         items = []
         for data in datas:
+            print()
+            print()
             secu_code = data.get("SecuCode")
             inner_code = self.codes_map.get(secu_code)
             event_code = data.get("EventCode")
@@ -326,6 +335,6 @@ if __name__ == '__main__':
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 1)))
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 2)))
-    print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 5)))
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 5)))
 
-    # fa.launch()
+    fa.launch()
