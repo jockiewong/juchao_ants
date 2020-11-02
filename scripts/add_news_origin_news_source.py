@@ -36,6 +36,7 @@ CREATE TABLE `dc_ann_event_source_news_detail` (
   KEY `k1` (`NewsID`,`PubTime`,`SecuCode`,`EventCode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告舆情事件明细-新闻源';
 '''
+import json
 import os
 import sys
 
@@ -61,8 +62,9 @@ class MedNameUpdate(SpiderBase):
         ret = self.tonglian_client.select_all(sql2)
         for r in ret:
             news_medname_map[r.get("NEWS_ID")] = r.get("NEWS_ORIGIN_SOURCE")
-
-        print(news_medname_map)
+        # print(news_medname_map)
+        with open("news_medname.json", "w") as f:
+            f.write(json.dumps(news_medname_map, indent=4))
 
 
 if __name__ == '__main__':
