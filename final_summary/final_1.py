@@ -45,6 +45,7 @@ CREATE TABLE `dc_ann_event_source_ann_detail` (
 CREATE TABLE `dc_ann_event_source_news_detail` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `NewsID` bigint(20) NOT NULL COMMENT '新闻主表ID',
+  `MedName` varchar(100) DEFAULT NULL COMMENT '媒体名称',
   `PubTime` datetime NOT NULL COMMENT '发布时间（精确到秒）',
   `Title` varchar(500) DEFAULT NULL COMMENT '标题',
   `Website` varchar(1000) DEFAULT NULL COMMENT '网址',
@@ -58,7 +59,7 @@ CREATE TABLE `dc_ann_event_source_news_detail` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `un1` (`NewsID`,`SecuCode`,`EventCode`),
   KEY `k1` (`NewsID`,`PubTime`,`SecuCode`,`EventCode`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告舆情事件明细-新闻源' ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='公告舆情事件明细-新闻源';
 
 # 股吧中间明细表
 CREATE TABLE `dc_ann_event_source_guba_detail` (
@@ -256,6 +257,16 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             dt += datetime.timedelta(days=1)
         return sorted(list(trading_days))
 
+    def get_meds_scores(self, meds: list):
+        # 计算媒体得分
+        self._yuqing_init()
+        sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(meds))
+        ret = self.yuqing_client.select_all(sql)
+        scores = [int(r.get("InfluenceWeight", 1)) for r in ret]
+        print(scores)
+        total_score = sum(scores)
+        return total_score
+
     def get_news_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
         """
         统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
@@ -265,15 +276,15 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         self._yuqing_init()
         trading_days = self.get_after_five_trading_days(pub_date)
         min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
-        sql = '''select * from dc_ann_event_source_news_detail where SecuCode = '{}' \
+        sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
-        print(sql)
         datas = self.yuqing_client.select_all(sql)
-        print(len(datas))
         count = len(datas)
-        for data in datas:
-            print(data)
-        return count
+        total_scores = 0
+        if count != 0:
+            meds = [data.get("MedName") for data in datas]
+            total_scores = self.get_meds_scores(meds)
+        return count, total_scores
 
     def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
         return 1

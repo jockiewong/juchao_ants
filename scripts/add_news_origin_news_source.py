@@ -76,10 +76,11 @@ class MedNameUpdate(SpiderBase):
         order_news_med_list = sorted(news_med_list, key=lambda one: int(one[0]))
 
         self._yuqing_init()
+        # TODO use update case
         for news_id, news_med_name in order_news_med_list:
             print(news_id)
             print(news_med_name)
-            if news_med_name is not None:
+            if int(news_id) > 60000000 and news_med_name is not None:
                 sql = '''update dc_ann_event_source_news_detail set MedName = '{}' where NewsID = {};'''.format(news_med_name, news_id)
                 self.yuqing_client.update(sql)
 
