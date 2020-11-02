@@ -89,6 +89,12 @@ TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
 TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
 TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
 
+# 主题猎手数据库
+THE_HOST = env.get("THE_HOST", cf.get('theme', 'THE_HOST'))
+THE_PORT = env.get("THE_PORT", cf.get('theme', 'THE_PORT'))
+THE_USER = env.get("THE_USER", cf.get('theme', 'THE_USER'))
+THE_PASSWD = env.get("THE_PASSWD", cf.get('theme', 'THE_PASSWD'))
+THE_DB = env.get("THE_DB", cf.get('theme', 'THE_DB'))
 
 # product
 if LOCAL:
