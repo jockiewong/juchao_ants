@@ -3,6 +3,7 @@ import json
 import os
 import sys
 import time
+import traceback
 
 import requests
 import schedule
@@ -131,14 +132,18 @@ class LaunchSpider(SpiderBase):
                 print(resp)
 
 
-if __name__ == '__main__':
-    LaunchSpider().launch()
-    # AntSpider().start()
-    # AntSpider().ding_inc_count()
+def my_task():
+    try:
+        LaunchSpider().launch()
+    except:
+        traceback.print_exc()
+        time.sleep(10)
 
-    # schedule.every(20).minutes.do(AntSpider().start)
-    schedule.every(10).minutes.do(LaunchSpider().launch)
-    # schedule.every(5).hours.do(AntSpider().ding_inc_count)
+
+if __name__ == '__main__':
+    my_task()
+
+    schedule.every(10).minutes.do(my_task)
 
     while True:
         schedule.run_pending()
