@@ -141,7 +141,49 @@ CREATE TABLE `dc_const_media_info` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `un1` (`MedCode`),
   UNIQUE KEY `un2` (`MedName`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin AUTO_INCREMENT=30001 COMMENT='中间表-媒体信息表' ; 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin COMMENT='中间表-媒体信息表' ; 
+
+CREATE TABLE `block` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增的ID',
+  `type` tinyint(4) NOT NULL COMMENT '板块类型1:行业, 2:地区, 3:指数, 4:主题, 5:盘口(主题和盘口都属于概念)',
+  `code` varchar(32) NOT NULL COMMENT '板块代码',
+  `name` varchar(255) NOT NULL COMMENT '板块名称',
+  `status` tinyint(4) NOT NULL COMMENT '状态0:不可用, 1:可用',
+  `deleted` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否需要被删除,0不删除,1删除, 如果为1,将在每天系统生成板块文件之前, 会删除这些数据',
+  `create_at` int(11) NOT NULL COMMENT '创建时间',
+  `update_at` int(11) NOT NULL COMMENT '更新时间',
+  `update_user` int(11) NOT NULL COMMENT '更新人',
+  `needhis` tinyint(4) NOT NULL DEFAULT '0',
+  `segmode` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是不定时调仓',
+  `isprotected` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是受保护的板块',
+  `ispublic` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是可以公开的板块',
+  `isfund` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否是基金板块',
+  `jyname` varchar(255) NOT NULL DEFAULT '' COMMENT '聚源概念名称',
+  `jycode` varchar(64) NOT NULL DEFAULT '' COMMENT '聚源概念代码',
+  `uptoday` tinyint(4) NOT NULL DEFAULT '0' COMMENT '今天发生过更新,1:是 0:否',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`) USING BTREE,
+  KEY `codename` (`code`,`name`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='统一板块代码' ; 
+
+CREATE TABLE `block_code` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '自增ID',
+  `type` tinyint(4) NOT NULL COMMENT '类型1:行业, 2:地区, 3:指数',
+  `bid` int(11) NOT NULL COMMENT '所在板块的ID',
+  `sid` int(11) NOT NULL COMMENT '股票代码ID',
+  `code` varchar(32) NOT NULL COMMENT '代码',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  `status` tinyint(4) NOT NULL DEFAULT '1' COMMENT '状态0:不可用, 1:可用',
+  `level` int(11) NOT NULL DEFAULT '0' COMMENT '级别,0:未处理, 1:非核心, 2:核心',
+  `intop` int(11) NOT NULL DEFAULT '0' COMMENT '是否在前6的活跃股, 0:不是, 1：是',
+  `deleted` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否需要被删除,0不删除,1删除, 如果为1,将在每天系统生成板块文件之前, 会删除这些数据',
+  `create_at` int(11) NOT NULL COMMENT '创建时间',
+  `update_at` int(11) NOT NULL COMMENT '更新时间',
+  `update_user` int(11) NOT NULL COMMENT '更新人',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `bid_sid` (`bid`,`sid`),
+  KEY `code` (`code`,`name`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='板块股票关系' ; 
 '''
 import os
 import sys
@@ -199,6 +241,10 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
     def get_influence(self, item: dict):
         return 100
 
+    def log(self, data):
+        with open("final_1.log", "a") as f:
+            f.write("{}\n".format(data))
+
     def launch(self):
         self.get_inner_code_map()
         self.get_industry_code_map()
@@ -218,6 +264,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             pub_time = data.get("PubTime")
             pub_date = self.get_day(pub_time)
             link = data.get("PDFLink")
+            industry_code = self.industry_map.get(secu_code)
 
             item = {}
             item['SecuCode'] = secu_code
@@ -226,12 +273,16 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             item['PubDatetime'] = pub_time
             item['PubDate'] = pub_date
             item['Website'] = link
-            item['IndustryCode'] = self.industry_map.get(secu_code)
+            if industry_code:
+                item['IndustryCode'] = inner_code
+            else:
+                self.log(data)
+                continue
             item['NewsNum'] = self.get_news_num(secu_code, event_code, pub_time)
             item['PostNum'] = self.get_post_num(secu_code, event_code, pub_time)
             item['Influence'] = self.get_influence(item)
             print(item)
-            sys.exit(0)
+            # sys.exit(0)
             # self._save(self.yuqing_client, item, self.target_table, self.target_fields)
             items.append(item)
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
