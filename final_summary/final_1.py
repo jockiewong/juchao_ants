@@ -261,14 +261,16 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         # 计算媒体得分 得分有 1 3 10 100
         total_score = 0
 
+        r_meds = []
         for med in meds:
             if med is None:
                 total_score += 1
-                meds.remove(med)
+            else:
+                r_meds.append(med)
 
-        if len(meds) != 0:
+        if len(r_meds) != 0:
             self._yuqing_init()
-            sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(meds))
+            sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
             print(sql)
             ret = self.yuqing_client.select_all(sql)
             scores = [int(r.get("InfluenceWeight")) for r in ret]
@@ -346,6 +348,9 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             item['NewsNum'] = news_num
             item['Influence'] = scores
             item['PostNum'] = self.get_post_num(secu_code, event_code, pub_date)
+            self.log("公告明细表数据: {}".format(data))
+            self.log("生成数据:{}".format(item))
+            print(data)
             print(item)
             items.append(item)
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)

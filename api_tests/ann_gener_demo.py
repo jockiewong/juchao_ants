@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 import timeit
+import traceback
 from concurrent.futures._base import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
@@ -211,10 +212,11 @@ def ip_schedule():
 
 @timing
 def time_schedule():
-    # 最近一年的
-    _interval = 10
+    # 历史: 最近 1 年的, 10 天为一个 batch
+    # 增量: 最近 10 天的, 1 天为 一个 batch
+    _interval = 1
     _end_time = datetime.datetime.now()
-    _start_time = _end_time - datetime.timedelta(days=365)
+    _start_time = _end_time - datetime.timedelta(days=10)
 
     _dt = _end_time
     while _dt > _start_time:
@@ -233,9 +235,9 @@ def my_task():
 if __name__ == '__main__':
     my_task()
 
-    # schedule.every(5).hour.do(my_task)
+    schedule.every(5).hours.do(my_task)
 
-    # while True:
-    #     schedule.run_pending()
-    #
-    #     time.sleep(20)
+    while True:
+        schedule.run_pending()
+
+        time.sleep(20)
