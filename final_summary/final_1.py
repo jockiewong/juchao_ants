@@ -279,15 +279,12 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
         return total_score
 
-    def get_news_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
+    def get_news_num(self, secu_code: str, event_code: str, min_trading_day, max_trading_day):
         """
         统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
         最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
         select * from dc_ann_event_source_news_detail A where A.SecuCode = '{}' and A.EventCode = '{}' and PubTime between {} amd {} ;
         """
-        self._yuqing_init()
-        trading_days = self.get_after_five_trading_days(pub_date)
-        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
         datas = self.yuqing_client.select_all(sql)
@@ -299,11 +296,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             total_scores = self.get_meds_scores(meds)
         return count, total_scores
 
-    def get_post_num(self, secu_code: str, event_code: str, pub_date: datetime.datetime):
-        # TODO 放在外面
-        self._yuqing_init()
-        trading_days = self.get_after_five_trading_days(pub_date)
-        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
+    def get_post_num(self, secu_code: str, event_code: str, min_trading_day, max_trading_day):
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
         count = self.yuqing_client.select_one(sql).get("count")
@@ -335,6 +328,8 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             pub_date = self.get_day(pub_time)
             link = data.get("PDFLink")
             industry_code = self.industry_map.get(secu_code)
+            trading_days = self.get_after_five_trading_days(pub_date)
+            min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
 
             item = {}
             item['SecuCode'] = secu_code
@@ -344,10 +339,10 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             item['PubDate'] = pub_date
             item['Website'] = link
             item['IndustryCode'] = industry_code
-            news_num, scores = self.get_news_num(secu_code, event_code, pub_date)
+            news_num, scores = self.get_news_num(secu_code, event_code, min_trading_day, max_trading_day)
             item['NewsNum'] = news_num
             item['Influence'] = scores
-            item['PostNum'] = self.get_post_num(secu_code, event_code, pub_date)
+            item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
             self.log("公告明细表数据: {}".format(data))
             self.log("生成数据:{}".format(item))
             print(data)
