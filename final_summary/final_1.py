@@ -97,6 +97,9 @@ Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
 """
+import time
+from functools import wraps
+
 '''辅助用表: 
 (1) 公告事件常量表: 
 CREATE TABLE `sf_const_announcement` (
@@ -199,6 +202,17 @@ sys.path.insert(0, file_path)
 from base_spider import SpiderBase
 
 
+def timing(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        r = func(*args, **kwargs)
+        end = time.perf_counter()
+        print('[' + func.__name__ + ']used:' + str(end - start))
+        return r
+    return wrapper
+
+
 class FinalAntDetail(SpiderBase):
     def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
         super(FinalAntDetail, self).__init__()
@@ -246,6 +260,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             else:
                 day += datetime.timedelta(days=1)
 
+    @timing
     def get_after_five_trading_days(self, dt: datetime.datetime):
         """当日（包括当日之后的）5 个交易日"""
         trading_days = set()
@@ -279,7 +294,8 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
         return total_score
 
-    def get_news_num(self, secu_code: str, event_code: str, min_trading_day, max_trading_day):
+    @timing
+    def get_news_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         """
         统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
         最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
@@ -296,7 +312,8 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             total_scores = self.get_meds_scores(meds)
         return count, total_scores
 
-    def get_post_num(self, secu_code: str, event_code: str, min_trading_day, max_trading_day):
+    @timing
+    def get_post_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
         count = self.yuqing_client.select_one(sql).get("count")
@@ -306,6 +323,35 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         with open("final_1.log", "a") as f:
             f.write("{}\n".format(data))
 
+    @timing
+    def process_data(self, data: dict):
+        secu_code = data.get("SecuCode")
+        inner_code = self.codes_map.get(secu_code)
+        event_code = data.get("EventCode")
+        pub_time = data.get("PubTime")
+        pub_date = self.get_day(pub_time)
+        link = data.get("PDFLink")
+        industry_code = self.industry_map.get(secu_code)
+        trading_days = self.get_after_five_trading_days(pub_date)
+        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
+        item = {}
+        item['SecuCode'] = secu_code
+        item['InnerCode'] = inner_code
+        item['EventCode'] = event_code
+        item['PubDatetime'] = pub_time
+        item['PubDate'] = pub_date
+        item['Website'] = link
+        item['IndustryCode'] = industry_code
+        news_num, scores = self.get_news_num(secu_code, event_code, min_trading_day, max_trading_day)
+        item['NewsNum'] = news_num
+        item['Influence'] = scores
+        item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
+        self.log("公告明细表数据: {}".format(data))
+        self.log("生成数据:{}".format(item))
+        print(data)
+        print(item)
+        return item
+
     def launch(self):
         self.get_inner_code_map()
         self.get_industry_code_map()
@@ -313,40 +359,12 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
             self.source_table, self.start_time, self.end_time)
-        # print(sql)
         datas = self.yuqing_client.select_all(sql)
-        # print(len(datas))
+        print("{} 到 {}这段时间的数据总量是 {}".format(self.start_time, self.end_time, len(datas)))
 
         items = []
         for data in datas:
-            print()
-            print()
-            secu_code = data.get("SecuCode")
-            inner_code = self.codes_map.get(secu_code)
-            event_code = data.get("EventCode")
-            pub_time = data.get("PubTime")
-            pub_date = self.get_day(pub_time)
-            link = data.get("PDFLink")
-            industry_code = self.industry_map.get(secu_code)
-            trading_days = self.get_after_five_trading_days(pub_date)
-            min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
-
-            item = {}
-            item['SecuCode'] = secu_code
-            item['InnerCode'] = inner_code
-            item['EventCode'] = event_code
-            item['PubDatetime'] = pub_time
-            item['PubDate'] = pub_date
-            item['Website'] = link
-            item['IndustryCode'] = industry_code
-            news_num, scores = self.get_news_num(secu_code, event_code, min_trading_day, max_trading_day)
-            item['NewsNum'] = news_num
-            item['Influence'] = scores
-            item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
-            self.log("公告明细表数据: {}".format(data))
-            self.log("生成数据:{}".format(item))
-            print(data)
-            print(item)
+            item = self.process_data(data)
             items.append(item)
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
 
@@ -355,12 +373,4 @@ if __name__ == '__main__':
     _start_time = datetime.datetime(2020, 7, 30)
     _end_time = datetime.datetime(2020, 10, 30)
     fa = FinalAntDetail(_start_time, _end_time)
-    # fa.get_inner_code_map()
-    # print(fa.codes_map)
-    # fa.get_industry_code_map()
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 1)))
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 2)))
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 5)))
-
     fa.launch()
