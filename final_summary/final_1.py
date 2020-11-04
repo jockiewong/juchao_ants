@@ -97,7 +97,10 @@ Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
 """
+import multiprocessing
 import time
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
 
 '''辅助用表: 
@@ -262,7 +265,12 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
     @timing
     def get_after_five_trading_days(self, dt: datetime.datetime):
-        """当日（包括当日之后的）5 个交易日"""
+        """当日（包括当日之后的）5 个交易日
+        TODO 提速
+        将一段时间内的全部交易日全部拿出来放在一个列表中排序
+        取某一天的时间的索引（若不存在取之后最近的一个）然后顺次取之后第五个索引即可
+        未击中时间范围时重新计算
+        """
         trading_days = set()
         while True:
             trading_day = self.get_nearest_trading_day(dt, direction='after')
@@ -348,6 +356,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
         self.log("公告明细表数据: {}".format(data))
         self.log("生成数据:{}".format(item))
+        self.log(" ")
         print(data)
         print(item)
         return item
@@ -363,14 +372,43 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         print("{} 到 {}这段时间的数据总量是 {}".format(self.start_time, self.end_time, len(datas)))
 
         items = []
+
+        # (1)
         for data in datas:
             item = self.process_data(data)
             items.append(item)
+
+        # (2)
+        # with ThreadPoolExecutor(max_workers=10) as t:
+        #     res = [t.submit(self.process_data, data) for data in datas]
+        # for future in as_completed(res):
+        #     item = future.result()
+        #     if item:
+        #         items.append(item)
+
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
 
 
 if __name__ == '__main__':
-    _start_time = datetime.datetime(2020, 7, 30)
-    _end_time = datetime.datetime(2020, 10, 30)
-    fa = FinalAntDetail(_start_time, _end_time)
-    fa.launch()
+    # _start_time = datetime.datetime(2020, 7, 30)
+    # _end_time = datetime.datetime(2020, 10, 30)
+    # fa = FinalAntDetail(_start_time, _end_time)
+    # fa.launch()
+
+
+    def process_task(args):
+        start_time, end_time = args[0], args[1]
+        FinalAntDetail(start_time, end_time).launch()
+
+    with multiprocessing.Pool(8) as workers:
+        workers.map(process_task, [
+            (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
+            (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
+            (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
+            (datetime.datetime(2020, 8, 5), datetime.datetime(2020, 8, 6)),
+            (datetime.datetime(2020, 8, 7), datetime.datetime(2020, 8, 8)),
+            (datetime.datetime(2020, 8, 9), datetime.datetime(2020, 8, 10)),
+            (datetime.datetime(2020, 8, 11), datetime.datetime(2020, 8, 12)),
+            (datetime.datetime(2020, 8, 13), datetime.datetime(2020, 8, 14)),
+            (datetime.datetime(2020, 8, 15), datetime.datetime(2020, 8, 16)),
+        ])
