@@ -237,7 +237,7 @@ class FinalAntDetail(SpiderBase):
 
     def get_single_client(self, conf: dict):
         connection = pymysql.connect(host=conf.get("host"),
-                                     port=conf.get("port"),
+                                     port=int(conf.get("port")),
                                      user=conf.get("user"),
                                      password=conf.get("password"),
                                      db=conf.get("db"),
@@ -306,6 +306,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         :param meds:
         :return:
         """
+        # TODO 直接拿出 map 在内存中
         total_score = 0
 
         r_meds = []
@@ -318,8 +319,20 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         if len(r_meds) != 0:
             self._yuqing_init()
             sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
-            ret = self.yuqing_client.select_all(sql)   # TODO use single client
+            ret = self.yuqing_client.select_all(sql)
+
+            # yuqing_conn = self.get_single_client(self.yuqing_cfg)
+            # yuqing_cursor = yuqing_conn.cursor()
+            # try:
+            #     yuqing_cursor.execute(sql)
+            #     ret = yuqing_cursor.fetchall()
+            #     yuqing_conn.commit()
+            # except:
+            #     yuqing_conn.rollback()
+            #     raise Exception("数据库异常")
+
             scores = [int(r.get("InfluenceWeight")) for r in ret]
+            # scores = [int(r[0]) for r in ret]
             total_score += sum(scores)
         return total_score
 
@@ -332,16 +345,29 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         """
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
-        datas = self.yuqing_client.select_all(sql)    # TODO use single client
+
+        # yuqing_conn = self.get_single_client(self.yuqing_cfg)
+        # yuqing_cursor = yuqing_conn.cursor()
+        # try:
+        #     yuqing_cursor.execute(sql)
+        #     datas = yuqing_cursor.fetchall()
+        #     yuqing_conn.commit()
+        # except:
+        #     yuqing_conn.rollback()
+        #     raise Exception("数据库异常")
+
+        datas = self.yuqing_client.select_all(sql)
+        print(datas)
         count = len(datas)
         total_scores = 0
         if count != 0:
-            meds = [data.get("MedName") for data in datas]
+            meds = [data.get("MedName") for data in datas]  # dict
+            # meds = [data[0] for data in datas]   # tuple
             print("meds:", meds)
             total_scores = self.get_meds_scores(meds)
         return count, total_scores
 
-    @timing
+    # @timing
     def get_post_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
@@ -374,8 +400,8 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         item['NewsNum'] = news_num
         item['Influence'] = scores
         item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
-        print(data)
-        print(item)
+        # print(data)
+        # print(item)
         return item
 
     def launch(self):
@@ -432,14 +458,17 @@ if __name__ == '__main__':
     with multiprocessing.Pool(8) as workers:
         workers.map(process_task, [   # TODO
             # (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
+            # (datetime.datetime(2020, 7, 31), datetime.datetime(2020, 8, 1)),
             # (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
+            # (datetime.datetime(2020, 8, 2), datetime.datetime(2020, 8, 3)),
             # (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
+            (datetime.datetime(2020, 8, 4), datetime.datetime(2020, 8, 5)),
             # (datetime.datetime(2020, 8, 5), datetime.datetime(2020, 8, 6)),
+            (datetime.datetime(2020, 8, 6), datetime.datetime(2020, 8, 7)),
             # (datetime.datetime(2020, 8, 7), datetime.datetime(2020, 8, 8)),
             # (datetime.datetime(2020, 8, 9), datetime.datetime(2020, 8, 10)),
             # (datetime.datetime(2020, 8, 11), datetime.datetime(2020, 8, 12)),
             # (datetime.datetime(2020, 8, 13), datetime.datetime(2020, 8, 14)),
             # (datetime.datetime(2020, 8, 15), datetime.datetime(2020, 8, 16)),
-
-            (datetime.datetime(2020, 8, 17), datetime.datetime(2020, 8, 18)),
+            # (datetime.datetime(2020, 8, 17), datetime.datetime(2020, 8, 18)),
         ])
