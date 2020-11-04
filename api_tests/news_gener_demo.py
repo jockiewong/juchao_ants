@@ -2,6 +2,7 @@
 # 新闻先直接接通联库的数据
 import datetime
 import json
+import logging
 import os
 import sys
 from concurrent.futures._base import as_completed
@@ -12,6 +13,10 @@ import requests
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
+
+log_file = os.path.join(cur_path, 'news.log')
+logging.basicConfig(level=logging.INFO, filename=log_file, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 from base_spider import SpiderBase
 
@@ -93,8 +98,10 @@ class NewsGenerator(SpiderBase):
         except Exception as e:
             print(e)
             resp = None
-            with open("news_err.log", 'a') as f:
-                f.write(f'{data.get("NEWS_ID")}\n')
+            logger.warning(f'{data.get("NEWS_ID")}\n')
+            print(f'{data.get("NEWS_ID")}\n')
+            # with open("news_err.log", 'a') as f:
+            #     f.write(f'{data.get("NEWS_ID")}\n')
 
         if resp and resp.status_code == 200:
             body = json.loads(resp.text)
@@ -128,7 +135,7 @@ class NewsGenerator(SpiderBase):
 
         dt = self.start_time
         while dt <= self.end_time:
-            end_dt = dt + datetime.timedelta(days=3)
+            end_dt = dt + datetime.timedelta(days=1)
             sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_PUBLISH_TIME between '{}' and '{}' \

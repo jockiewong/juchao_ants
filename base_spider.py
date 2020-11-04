@@ -27,7 +27,9 @@ from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SP
                      THE_PASSWD, THE_DB)
 from sql_pool import PyMysqlPoolBase
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# cur_path = os.path.split(os.path.realpath(__file__))[0]
+# log_file = os.path.join(cur_path, 'run.log')
+# logging.basicConfig(level=logging.INFO, filename=log_file, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
