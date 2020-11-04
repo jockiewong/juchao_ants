@@ -1,6 +1,6 @@
 # 接新闻数据源 -->  news_base_tonglian(良哥) --> dc_ann_event_source_news_detail
 # 新闻先直接接通联库的数据
-
+import datetime
 import json
 import os
 import sys
@@ -69,14 +69,16 @@ class NewsGenerator(SpiderBase):
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8 ;
     '''
 
-    def __init__(self):
+    def __init__(self, start_time, end_time):
         super(NewsGenerator, self).__init__()
         self.content_table_name = 'vnews_content_v1'
         self.body_table_name = 'vnews_body_v1'
         self.batch_num = 10000
         self.target_table_name = 'dc_ann_event_source_news_detail'
         self.target_fields = ['NewsID', 'PubTime', 'Title', 'Website', 'SecuCode', 'EventCode',
-                              'EventName', 'Position']
+                              'EventName', 'Position', 'MedName']
+        self.start_time = start_time
+        self.end_time = end_time
 
     def post_api(self, data: dict):
         req_data = {'texttype': 'news',
@@ -87,6 +89,7 @@ class NewsGenerator(SpiderBase):
         data_json = json.dumps(req_data)
         try:
             resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json, timeout=10)
+            # resp = requests.post('http://0.0.0.0:9009/jznlpsv/v2/query/', data_json, timeout=10)
         except Exception as e:
             print(e)
             resp = None
@@ -95,8 +98,8 @@ class NewsGenerator(SpiderBase):
 
         if resp and resp.status_code == 200:
             body = json.loads(resp.text)
-            if body.get("event_news"):
-                ret = body.get("event_news")[0]
+            if body.get("event_ann"):
+                ret = body.get("event_ann")[0]
                 item = {}
                 item['NewsID'] = data.get("NEWS_ID")
                 item['MedName'] = data.get("NEWS_ORIGIN_SOURCE")
@@ -107,11 +110,14 @@ class NewsGenerator(SpiderBase):
                 item['EventCode'] = ret.get("event_code")
                 item['Position'] = 2 if ret.get("position") == "content" else 1   # 提及位置：1-标题,2-内容
                 return item
+        else:
+            return None
 
     def select_max_title_id(self):
         # 以标题中的新闻id为准
         self._tonglian_init()
-        sql = '''select min(NEWS_ID) as min_id, max(NEWS_ID) as max_id from {} ; '''.format(self.content_table_name)
+        sql = '''select min(NEWS_ID) as min_id, max(NEWS_ID) as max_id from {} where NEWS_PUBLISH_TIME between '{}' and '{}'; '''.format(
+            self.content_table_name, self.start_time, self.end_time)
         data = self.tonglian_client.select_one(sql)
         max_id, min_id = data.get("max_id"), data.get("min_id")
         return max_id, min_id
@@ -121,18 +127,19 @@ class NewsGenerator(SpiderBase):
         self._yuqing_init()
 
         max_id, min_id = self.select_max_title_id()
-        print(max_id, " ", min_id)
+        print("news_id 的范围是: ", min_id, max_id)
         for i in range(min_id // self.batch_num, max_id // self.batch_num + 1):
             news_id_start = self.batch_num * i
             news_id_end = self.batch_num * (i+1)
-            print(news_id_start, news_id_end)
+            print("当前范围是: ", news_id_start, news_id_end)
             sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_ID >= {} and T.NEWS_ID <= {} \
 and B.NEWS_ID >= {} and B.NEWS_ID <= {}  \
 and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start, news_id_end)
+            print("sql: ", sql)
             datas = self.tonglian_client.select_all(sql)
-            print(len(datas))
+            print("当前数据量是: ", len(datas))
 
             items = []
             with ThreadPoolExecutor(max_workers=10) as t:
@@ -140,11 +147,15 @@ and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start,
             for future in as_completed(res):
                 item = future.result()
                 if item:
+                    print(">>> ", item)
                     items.append(item)
 
             print(len(items))
             self._batch_save(self.yuqing_client, items, self.target_table_name, self.target_fields)
+            self.yuqing_client.end()
 
 
 if __name__ == '__main__':
-    NewsGenerator().launch()
+    _start = datetime.datetime(2019, 10, 1)
+    _end = datetime.datetime(2020, 10, 1)
+    NewsGenerator(_start, _end).launch()
