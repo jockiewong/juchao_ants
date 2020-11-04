@@ -230,19 +230,20 @@ class FinalAntDetail(SpiderBase):
         self.trading_table = 'tradingday'
         self.codes_map = {}
         self.industry_map = {}
+        self.med_inf_map = {}
 
         self.start_time = start_time
         self.end_time = end_time
         self.trading_days = None
 
-    def get_single_client(self, conf: dict):
-        connection = pymysql.connect(host=conf.get("host"),
-                                     port=int(conf.get("port")),
-                                     user=conf.get("user"),
-                                     password=conf.get("password"),
-                                     db=conf.get("db"),
-                                     charset='utf8',)
-        return connection
+    # def get_single_client(self, conf: dict):
+    #     connection = pymysql.connect(host=conf.get("host"),
+    #                                  port=int(conf.get("port")),
+    #                                  user=conf.get("user"),
+    #                                  password=conf.get("password"),
+    #                                  db=conf.get("db"),
+    #                                  charset='utf8',)
+    #     return connection
 
     def get_inner_code_map(self):
         self._yuqing_init()
@@ -299,6 +300,13 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
         return self.trading_days[_index], self.trading_days[_index+4]
 
+    def get_med_inf_map(self):
+        self._yuqing_init()
+        sql = '''select MedName, InfluenceWeight from dc_const_media_info ; '''
+        ret = self.yuqing_client.select_all(sql)
+        for r in ret:
+            self.med_inf_map[r.get("MedName")] = int(r.get("InfluenceWeight"))
+
     def get_meds_scores(self, meds: list):
         """
         计算媒体得分 得分有 1 3 10 100
@@ -306,7 +314,6 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         :param meds:
         :return:
         """
-        # TODO 直接拿出 map 在内存中
         total_score = 0
 
         r_meds = []
@@ -316,23 +323,27 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             else:
                 r_meds.append(med)
 
+        # if len(r_meds) != 0:
+        #     self._yuqing_init()
+        #     sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
+        #     ret = self.yuqing_client.select_all(sql)
+        #
+        #     # yuqing_conn = self.get_single_client(self.yuqing_cfg)
+        #     # yuqing_cursor = yuqing_conn.cursor()
+        #     # try:
+        #     #     yuqing_cursor.execute(sql)
+        #     #     ret = yuqing_cursor.fetchall()
+        #     #     yuqing_conn.commit()
+        #     # except:
+        #     #     yuqing_conn.rollback()
+        #     #     raise Exception("数据库异常")
+        #
+        #     scores = [int(r.get("InfluenceWeight")) for r in ret]
+        #     # scores = [int(r[0]) for r in ret]
+        #     total_score += sum(scores)
+
         if len(r_meds) != 0:
-            self._yuqing_init()
-            sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
-            ret = self.yuqing_client.select_all(sql)
-
-            # yuqing_conn = self.get_single_client(self.yuqing_cfg)
-            # yuqing_cursor = yuqing_conn.cursor()
-            # try:
-            #     yuqing_cursor.execute(sql)
-            #     ret = yuqing_cursor.fetchall()
-            #     yuqing_conn.commit()
-            # except:
-            #     yuqing_conn.rollback()
-            #     raise Exception("数据库异常")
-
-            scores = [int(r.get("InfluenceWeight")) for r in ret]
-            # scores = [int(r[0]) for r in ret]
+            scores = [self.med_inf_map.get(r_med, 1) for r_med in r_meds]
             total_score += sum(scores)
         return total_score
 
@@ -407,6 +418,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
     def launch(self):
         self.get_inner_code_map()
         self.get_industry_code_map()
+        self.get_med_inf_map()
 
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
@@ -443,8 +455,8 @@ if __name__ == '__main__':
             dt = end_dt
         return dates
 
-    # _start_time = datetime.datetime(2020, 7, 30)
-    # _end_time = datetime.datetime(2020, 10, 30)
+    _start_time = datetime.datetime(2020, 7, 30)
+    _end_time = datetime.datetime(2020, 10, 30)
     # fa = FinalAntDetail(_start_time, _end_time)
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 4)))
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
@@ -456,19 +468,4 @@ if __name__ == '__main__':
         FinalAntDetail(start_time, end_time).launch()
 
     with multiprocessing.Pool(8) as workers:
-        workers.map(process_task, [   # TODO
-            # (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
-            # (datetime.datetime(2020, 7, 31), datetime.datetime(2020, 8, 1)),
-            # (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
-            # (datetime.datetime(2020, 8, 2), datetime.datetime(2020, 8, 3)),
-            # (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
-            (datetime.datetime(2020, 8, 4), datetime.datetime(2020, 8, 5)),
-            # (datetime.datetime(2020, 8, 5), datetime.datetime(2020, 8, 6)),
-            (datetime.datetime(2020, 8, 6), datetime.datetime(2020, 8, 7)),
-            # (datetime.datetime(2020, 8, 7), datetime.datetime(2020, 8, 8)),
-            # (datetime.datetime(2020, 8, 9), datetime.datetime(2020, 8, 10)),
-            # (datetime.datetime(2020, 8, 11), datetime.datetime(2020, 8, 12)),
-            # (datetime.datetime(2020, 8, 13), datetime.datetime(2020, 8, 14)),
-            # (datetime.datetime(2020, 8, 15), datetime.datetime(2020, 8, 16)),
-            # (datetime.datetime(2020, 8, 17), datetime.datetime(2020, 8, 18)),
-        ])
+        workers.map(process_task, sub_dates(_start_time, _end_time, 1))
