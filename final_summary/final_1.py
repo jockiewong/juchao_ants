@@ -98,6 +98,7 @@ Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权�
 
 """
 import multiprocessing
+import pprint
 import time
 from concurrent.futures._base import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -407,13 +408,22 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
 
 
 if __name__ == '__main__':
+    def sub_dates(start_day, end_day, interval):
+        dates = []
+        dt = start_day
+        while dt <= end_day:
+            end_dt = dt + datetime.timedelta(days=interval)
+            dates.append([dt, end_dt])
+            dt = end_dt
+        return dates
+
     # _start_time = datetime.datetime(2020, 7, 30)
     # _end_time = datetime.datetime(2020, 10, 30)
     # fa = FinalAntDetail(_start_time, _end_time)
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 4)))
     # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
     # fa.launch()
-
+    # print(pprint.pformat(sub_dates(_start_time, _end_time, 3)))
 
     def process_task(args):
         start_time, end_time = args[0], args[1]
@@ -421,13 +431,15 @@ if __name__ == '__main__':
 
     with multiprocessing.Pool(8) as workers:
         workers.map(process_task, [   # TODO
-            (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
-            (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
-            (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
-            (datetime.datetime(2020, 8, 5), datetime.datetime(2020, 8, 6)),
-            (datetime.datetime(2020, 8, 7), datetime.datetime(2020, 8, 8)),
-            (datetime.datetime(2020, 8, 9), datetime.datetime(2020, 8, 10)),
-            (datetime.datetime(2020, 8, 11), datetime.datetime(2020, 8, 12)),
-            (datetime.datetime(2020, 8, 13), datetime.datetime(2020, 8, 14)),
-            (datetime.datetime(2020, 8, 15), datetime.datetime(2020, 8, 16)),
+            # (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
+            # (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
+            # (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
+            # (datetime.datetime(2020, 8, 5), datetime.datetime(2020, 8, 6)),
+            # (datetime.datetime(2020, 8, 7), datetime.datetime(2020, 8, 8)),
+            # (datetime.datetime(2020, 8, 9), datetime.datetime(2020, 8, 10)),
+            # (datetime.datetime(2020, 8, 11), datetime.datetime(2020, 8, 12)),
+            # (datetime.datetime(2020, 8, 13), datetime.datetime(2020, 8, 14)),
+            # (datetime.datetime(2020, 8, 15), datetime.datetime(2020, 8, 16)),
+
+            (datetime.datetime(2020, 8, 17), datetime.datetime(2020, 8, 18)),
         ])
