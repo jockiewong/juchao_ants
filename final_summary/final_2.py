@@ -32,12 +32,17 @@ Website: dc_ann_event_source_ann_detail 中的 PDFLink ;
 '''
 
 import datetime
+import logging
 import os
 import sys
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
+
+log_file = os.path.join(cur_path, 'final2.log')
+logging.basicConfig(level=logging.INFO, filename=log_file, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 from base_spider import SpiderBase
 
@@ -121,4 +126,5 @@ class FinalAntSummary(SpiderBase):
 
 
 if __name__ == '__main__':
-    FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).launch()
+    # FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).launch()
+    FinalAntSummary(datetime.datetime(2020, 10, 30), datetime.datetime(2020, 11, 5)).launch()

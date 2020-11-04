@@ -109,10 +109,10 @@ class NewsGenerator(SpiderBase):
                 ret = body.get("event_ann")[0]
                 item = {}
                 item['NewsID'] = data.get("NEWS_ID")
-                item['MedName'] = data.get("NEWS_ORIGIN_SOURCE")
+                item['MedName'] = data.get("NEWS_PUBLISH_SITE")
                 item['PubTime'] = data.get('NEWS_PUBLISH_TIME')
                 item['Title'] = data.get("NEWS_TITLE")
-                item['Website'] = data.get("NEWS_PUBLISH_SITE")
+                item['Website'] = data.get("NEWS_URL")
                 item['SecuCode'] = ret.get("secucode")
                 item['EventCode'] = ret.get("event_code")
                 item['Position'] = 2 if ret.get("position") == "content" else 1   # 提及位置：1-标题,2-内容
@@ -136,7 +136,7 @@ class NewsGenerator(SpiderBase):
         dt = self.start_time
         while dt <= self.end_time:
             end_dt = dt + datetime.timedelta(days=1)
-            sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
+            sql = '''select T.NEWS_ID, T.NEWS_URL, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_PUBLISH_TIME between '{}' and '{}' \
 and T.NEWS_ID = B.NEWS_ID; '''.format(dt, end_dt)
@@ -165,7 +165,7 @@ and T.NEWS_ID = B.NEWS_ID; '''.format(dt, end_dt)
             news_id_start = self.batch_num * i
             news_id_end = self.batch_num * (i+1)
             print("当前范围是: ", news_id_start, news_id_end)
-            sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
+            sql = '''select T.NEWS_ID, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_ID >= {} and T.NEWS_ID <= {} \
 and B.NEWS_ID >= {} and B.NEWS_ID <= {}  \
