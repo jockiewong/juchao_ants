@@ -136,7 +136,8 @@ class NewsGenerator(SpiderBase):
 from vnews_content_v1 T, vnews_body_v1 B \
 where T.NEWS_ID >= {} and T.NEWS_ID <= {} \
 and B.NEWS_ID >= {} and B.NEWS_ID <= {}  \
-and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start, news_id_end)
+and T.NEWS_ID = B.NEWS_ID \
+and T.NEWS_PUBLISH_TIME between '{}' and '{}'; '''.format(news_id_start, news_id_end, news_id_start, news_id_end, self.start_time, self.end_time)
             print("sql: ", sql)
             datas = self.tonglian_client.select_all(sql)
             print("当前数据量是: ", len(datas))
@@ -147,7 +148,7 @@ and T.NEWS_ID = B.NEWS_ID; '''.format(news_id_start, news_id_end, news_id_start,
             for future in as_completed(res):
                 item = future.result()
                 if item:
-                    print(">>> ", item)
+                    # print(">>> ", item)
                     items.append(item)
 
             print(len(items))
