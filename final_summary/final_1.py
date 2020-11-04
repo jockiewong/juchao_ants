@@ -230,6 +230,7 @@ class FinalAntDetail(SpiderBase):
 
         self.start_time = start_time
         self.end_time = end_time
+        self.trading_days = None
 
     def get_inner_code_map(self):
         self._yuqing_init()
@@ -263,6 +264,20 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             else:
                 day += datetime.timedelta(days=1)
 
+    def get_all_trading_days(self, start_dt: datetime.datetime, end_dt:datetime.datetime):
+        """
+        获取起止时间之间的全部交易日并且排序
+        :param start_dt:
+        :param end_dt:
+        :return:
+        """
+        sql = '''select Date from  {} where SecuMarket = 83 and IfTradingDay = 1 and Date between '{}' and '{}'; '''.format(
+            self.trading_table, start_dt, end_dt
+        )
+        trading_days = self.yuqing_client.select_all(sql)
+        trading_days = sorted([trading_day.get("Date") for trading_day in trading_days])
+        return trading_days
+
     @timing
     def get_after_five_trading_days(self, dt: datetime.datetime):
         """当日（包括当日之后的）5 个交易日
@@ -271,14 +286,28 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         取某一天的时间的索引（若不存在取之后最近的一个）然后顺次取之后第五个索引即可
         未击中时间范围时重新计算
         """
-        trading_days = set()
+        self._yuqing_init()
+        if not self.trading_days:
+            self.trading_days = self.get_all_trading_days(self.start_time, self.end_time+datetime.timedelta(days=30))   # TODO
+
         while True:
-            trading_day = self.get_nearest_trading_day(dt, direction='after')
-            trading_days.add(trading_day)
-            if len(trading_days) == 5:
+            try:
+                _index = self.trading_days.index(dt)
+            except ValueError:
+                dt += datetime.timedelta(days=1)
+            else:
                 break
-            dt += datetime.timedelta(days=1)
-        return sorted(list(trading_days))
+
+        return self.trading_days[_index], self.trading_days[_index+4]
+
+        # trading_days = set()
+        # while True:
+        #     trading_day = self.get_nearest_trading_day(dt, direction='after')
+        #     trading_days.add(trading_day)
+        #     if len(trading_days) == 5:
+        #         break
+        #     dt += datetime.timedelta(days=1)
+        # return sorted(list(trading_days))
 
     def get_meds_scores(self, meds: list):
         # 计算媒体得分 得分有 1 3 10 100
@@ -393,6 +422,8 @@ if __name__ == '__main__':
     # _start_time = datetime.datetime(2020, 7, 30)
     # _end_time = datetime.datetime(2020, 10, 30)
     # fa = FinalAntDetail(_start_time, _end_time)
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 4)))
+    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
     # fa.launch()
 
 
