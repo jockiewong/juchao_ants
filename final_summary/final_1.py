@@ -103,6 +103,8 @@ from concurrent.futures._base import as_completed
 from concurrent.futures.thread import ThreadPoolExecutor
 from functools import wraps
 
+import pymysql
+
 '''辅助用表: 
 (1) 公告事件常量表: 
 CREATE TABLE `sf_const_announcement` (
@@ -232,6 +234,15 @@ class FinalAntDetail(SpiderBase):
         self.end_time = end_time
         self.trading_days = None
 
+    def get_single_client(self, conf: dict):
+        connection = pymysql.connect(host=conf.get("host"),
+                                     port=conf.get("port"),
+                                     user=conf.get("user"),
+                                     password=conf.get("password"),
+                                     db=conf.get("db"),
+                                     charset='utf8',)
+        return connection
+
     def get_inner_code_map(self):
         self._yuqing_init()
         sql = '''select SecuCode, InnerCode from {} where SecuCode in (select distinct(SecuCode) from {}); '''.format(
@@ -252,18 +263,6 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         for r in ret:
             self.industry_map[r.get("SecuCode")] = r.get("IndustryCode")
 
-    def get_nearest_trading_day(self, day: datetime.datetime, direction: str = 'before'):
-        self._yuqing_init()
-        while True:
-            sql = '''select IfTradingDay from {} where Date = '{}' and SecuMarket = 83 ; '''.format(self.trading_table, day)
-            is_trading_day = self.yuqing_client.select_one(sql).get("IfTradingDay")
-            if is_trading_day == 1:
-                return day
-            if direction == 'before':
-                day -= datetime.timedelta(days=1)
-            else:
-                day += datetime.timedelta(days=1)
-
     def get_all_trading_days(self, start_dt: datetime.datetime, end_dt:datetime.datetime):
         """
         获取起止时间之间的全部交易日并且排序
@@ -281,7 +280,6 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
     @timing
     def get_after_five_trading_days(self, dt: datetime.datetime):
         """当日（包括当日之后的）5 个交易日
-        TODO 提速
         将一段时间内的全部交易日全部拿出来放在一个列表中排序
         取某一天的时间的索引（若不存在取之后最近的一个）然后顺次取之后第五个索引即可
         未击中时间范围时重新计算
@@ -300,17 +298,13 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
 
         return self.trading_days[_index], self.trading_days[_index+4]
 
-        # trading_days = set()
-        # while True:
-        #     trading_day = self.get_nearest_trading_day(dt, direction='after')
-        #     trading_days.add(trading_day)
-        #     if len(trading_days) == 5:
-        #         break
-        #     dt += datetime.timedelta(days=1)
-        # return sorted(list(trading_days))
-
     def get_meds_scores(self, meds: list):
-        # 计算媒体得分 得分有 1 3 10 100
+        """
+        计算媒体得分 得分有 1 3 10 100
+        无名媒体(None) 计 1 分
+        :param meds:
+        :return:
+        """
         total_score = 0
 
         r_meds = []
@@ -323,12 +317,9 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         if len(r_meds) != 0:
             self._yuqing_init()
             sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
-            print(sql)
-            ret = self.yuqing_client.select_all(sql)
+            ret = self.yuqing_client.select_all(sql)   # TODO use single client
             scores = [int(r.get("InfluenceWeight")) for r in ret]
-            print(scores)
             total_score += sum(scores)
-
         return total_score
 
     @timing
@@ -340,7 +331,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         """
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
-        datas = self.yuqing_client.select_all(sql)
+        datas = self.yuqing_client.select_all(sql)    # TODO use single client
         count = len(datas)
         total_scores = 0
         if count != 0:
@@ -369,8 +360,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         pub_date = self.get_day(pub_time)
         link = data.get("PDFLink")
         industry_code = self.industry_map.get(secu_code)
-        trading_days = self.get_after_five_trading_days(pub_date)
-        min_trading_day, max_trading_day = trading_days[0], trading_days[-1]
+        min_trading_day, max_trading_day = self.get_after_five_trading_days(pub_date)
         item = {}
         item['SecuCode'] = secu_code
         item['InnerCode'] = inner_code
@@ -383,9 +373,6 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         item['NewsNum'] = news_num
         item['Influence'] = scores
         item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
-        self.log("公告明细表数据: {}".format(data))
-        self.log("生成数据:{}".format(item))
-        self.log(" ")
         print(data)
         print(item)
         return item
@@ -407,7 +394,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
             item = self.process_data(data)
             items.append(item)
 
-        # (2)
+        # (2) TODO
         # with ThreadPoolExecutor(max_workers=10) as t:
         #     res = [t.submit(self.process_data, data) for data in datas]
         # for future in as_completed(res):
@@ -416,6 +403,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         #         items.append(item)
 
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+        self.log("{} - {} ok".format(self.start_time, self.end_time))
 
 
 if __name__ == '__main__':
@@ -432,7 +420,7 @@ if __name__ == '__main__':
         FinalAntDetail(start_time, end_time).launch()
 
     with multiprocessing.Pool(8) as workers:
-        workers.map(process_task, [
+        workers.map(process_task, [   # TODO
             (datetime.datetime(2020, 7, 30), datetime.datetime(2020, 7, 31)),
             (datetime.datetime(2020, 8, 1), datetime.datetime(2020, 8, 2)),
             (datetime.datetime(2020, 8, 3), datetime.datetime(2020, 8, 4)),
