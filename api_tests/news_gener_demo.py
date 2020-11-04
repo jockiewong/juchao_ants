@@ -122,6 +122,32 @@ class NewsGenerator(SpiderBase):
         max_id, min_id = data.get("max_id"), data.get("min_id")
         return max_id, min_id
 
+    def launch2(self):
+        self._tonglian_init()
+        self._yuqing_init()
+
+        dt = self.start_time
+        while dt <= self.end_time:
+            end_dt = dt + datetime.timedelta(days=3)
+            sql = '''select T.NEWS_ID, T.NEWS_ORIGIN_SOURCE, T.NEWS_PUBLISH_TIME, T.NEWS_TITLE, T.NEWS_PUBLISH_SITE, B.NEWS_BODY \
+from vnews_content_v1 T, vnews_body_v1 B \
+where T.NEWS_PUBLISH_TIME between '{}' and '{}' \
+and T.NEWS_ID = B.NEWS_ID; '''.format(dt, end_dt)
+            print(sql)
+            datas = self.tonglian_client.select_all(sql)
+            print("当前数据量是: ", len(datas))
+            items = []
+            with ThreadPoolExecutor(max_workers=10) as t:
+                res = [t.submit(self.post_api, data) for data in datas]
+            for future in as_completed(res):
+                item = future.result()
+                if item:
+                    items.append(item)
+            print(len(items))
+            self._batch_save(self.yuqing_client, items, self.target_table_name, self.target_fields)
+            self.yuqing_client.end()
+            dt = end_dt
+
     def launch(self):
         self._tonglian_init()
         self._yuqing_init()
@@ -159,4 +185,5 @@ and T.NEWS_PUBLISH_TIME between '{}' and '{}'; '''.format(news_id_start, news_id
 if __name__ == '__main__':
     _start = datetime.datetime(2019, 10, 1)
     _end = datetime.datetime(2020, 10, 1)
-    NewsGenerator(_start, _end).launch()
+    # NewsGenerator(_start, _end).launch()
+    NewsGenerator(_start, _end).launch2()
