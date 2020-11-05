@@ -97,7 +97,8 @@ class GubaGenerator(SpiderBase):
 
         data_json = json.dumps(req_data)
         try:
-            resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json, timeout=10)
+            # resp = requests.post('http://139.159.245.37:9009/jznlpsv/v2/query/', data_json, timeout=10)
+            resp = requests.post('http://192.168.0.251:9009/jznlpsv/v2/query/', data_json, timeout=10)
         except Exception as e:
             print(e)
             resp = None
@@ -121,9 +122,9 @@ class GubaGenerator(SpiderBase):
                 return item
 
     def launch(self):
-        self._yuqing_init()
-        end_time = datetime.datetime(2020, 10, 1)
-        start_time = datetime.datetime(2020, 9, 25)
+        self._yuqing_init()   # 2020-09-01 - 2020-10-01
+        end_time = datetime.datetime(2020, 11, 6)
+        start_time = datetime.datetime(2020, 10, 1)
 
         dt = start_time
         while dt <= end_time:

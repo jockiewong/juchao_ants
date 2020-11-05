@@ -189,8 +189,8 @@ and T.NEWS_PUBLISH_TIME between '{}' and '{}'; '''.format(news_id_start, news_id
             self.yuqing_client.end()
 
 
-if __name__ == '__main__':
-    _start = datetime.datetime(2019, 10, 1)
-    _end = datetime.datetime(2020, 10, 1)
+if __name__ == '__main__':    # 2019-10-01 - 2020-10-01 ; 2020-10-01 - 2020-11-06
+    _start = datetime.datetime(2020, 10, 1)
+    _end = datetime.datetime(2020, 11, 6)
     # NewsGenerator(_start, _end).launch()
     NewsGenerator(_start, _end).launch2()

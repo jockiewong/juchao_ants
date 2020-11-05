@@ -354,8 +354,9 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
         select * from dc_ann_event_source_news_detail A where A.SecuCode = '{}' and A.EventCode = '{}' and PubTime between {} amd {} ;
         """
+        # TODO 需要将新闻的 secucode 加上前缀
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
-and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:], event_code, min_trading_day, max_trading_day)
 
         # yuqing_conn = self.get_single_client(self.yuqing_cfg)
         # yuqing_cursor = yuqing_conn.cursor()
@@ -368,8 +369,9 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         #     raise Exception("数据库异常")
 
         datas = self.yuqing_client.select_all(sql)
-        print(datas)
+        print("sql :", sql)
         count = len(datas)
+        print("count: ", count)
         total_scores = 0
         if count != 0:
             meds = [data.get("MedName") for data in datas]  # dict
@@ -411,8 +413,6 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         item['NewsNum'] = news_num
         item['Influence'] = scores
         item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
-        # print(data)
-        # print(item)
         return item
 
     def launch(self):
@@ -430,8 +430,15 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
 
         # (1)
         for data in datas:
+            print("data is: ", data)
             item = self.process_data(data)
+            print("item is: ", item)
             items.append(item)
+
+            if len(items) > 100:
+                self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+                self.yuqing_client.end()
+                items = []
 
         # (2) TODO
         # with ThreadPoolExecutor(max_workers=10) as t:
@@ -442,6 +449,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         #         items.append(item)
 
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+        self.yuqing_client.end()
         self.log("{} - {} ok".format(self.start_time, self.end_time))
 
 
@@ -455,13 +463,10 @@ if __name__ == '__main__':
             dt = end_dt
         return dates
 
-    _start_time = datetime.datetime(2020, 7, 30)
-    _end_time = datetime.datetime(2020, 10, 30)
+    _start_time = datetime.datetime(2019, 10, 1)
+    _end_time = datetime.datetime(2020, 10, 1)
     # fa = FinalAntDetail(_start_time, _end_time)
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 11, 4)))
-    # print(fa.get_after_five_trading_days(datetime.datetime(2020, 10, 31)))
     # fa.launch()
-    # print(pprint.pformat(sub_dates(_start_time, _end_time, 3)))
 
     def process_task(args):
         start_time, end_time = args[0], args[1]
