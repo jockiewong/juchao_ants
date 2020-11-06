@@ -124,7 +124,7 @@ class GubaGenerator(SpiderBase):
     def launch(self):
         self._yuqing_init()   # 2020-09-01 - 2020-10-01
         end_time = datetime.datetime(2020, 11, 6)
-        start_time = datetime.datetime(2020, 10, 1)
+        start_time = datetime.datetime(2020, 10, 20)
 
         dt = start_time
         while dt <= end_time:

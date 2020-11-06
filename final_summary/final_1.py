@@ -463,7 +463,7 @@ if __name__ == '__main__':
             dt = end_dt
         return dates
 
-    _start_time = datetime.datetime(2019, 10, 1)
+    _start_time = datetime.datetime(2020, 1, 1)
     _end_time = datetime.datetime(2020, 10, 1)
     # fa = FinalAntDetail(_start_time, _end_time)
     # fa.launch()
