@@ -58,3 +58,11 @@ sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
 python final_summary/final_2.py
 '''
+
+
+'''final1
+sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
+-itd --name final1 --env LOCAL=0 --env VPN=0 \
+registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
+python final_summary/final_1.py
+'''

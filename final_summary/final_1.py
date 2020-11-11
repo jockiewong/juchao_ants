@@ -97,14 +97,6 @@ Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
 """
-import multiprocessing
-import pprint
-import time
-from concurrent.futures._base import as_completed
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import wraps
-
-import pymysql
 
 '''辅助用表: 
 (1) 公告事件常量表: 
@@ -197,6 +189,14 @@ CREATE TABLE `block_code` (
   KEY `code` (`code`,`name`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='板块股票关系' ; 
 '''
+import multiprocessing
+import pprint
+import time
+from concurrent.futures._base import as_completed
+from concurrent.futures.thread import ThreadPoolExecutor
+from functools import wraps
+
+import pymysql
 import os
 import sys
 import datetime
@@ -426,9 +426,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:]
             self.source_table, self.start_time, self.end_time)
         datas = self.yuqing_client.select_all(sql)
         print("{} 到 {}这段时间的数据总量是 {}".format(self.start_time, self.end_time, len(datas)))
-
         items = []
-
         # (1)
         for data in datas:
             print("data is: ", data)
@@ -464,7 +462,7 @@ if __name__ == '__main__':
             dt = end_dt
         return dates
 
-    _start_time = datetime.datetime(2020, 1, 1)
+    _start_time = datetime.datetime(2019, 10, 1)
     _end_time = datetime.datetime(2020, 10, 1)
     # fa = FinalAntDetail(_start_time, _end_time)
     # fa.launch()
