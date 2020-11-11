@@ -94,6 +94,7 @@ class FinalAntSummary(SpiderBase):
 
         sql = '''select AnnID, SecuCode, PubTime, EventCode, Title, PDFLink from {} where PubTime  between '{}' and '{}'; '''.format(
             self.source_table, self.start_time, self.end_time)
+        print(sql)
         self._yuqing_init()
         datas = self.yuqing_client.select_all(sql)
         items = []
@@ -118,13 +119,18 @@ class FinalAntSummary(SpiderBase):
             item['AnnID'] = ann_id
             item['AnnTitle'] = title
             item['Website'] = link
-            print(item)
             items.append(item)
 
         print(len(items))
-        self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+        print(">>>>>> ", self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields))
+        self.yuqing_client.end()
 
 
 if __name__ == '__main__':
-    # FinalAntSummary(datetime.datetime(2020, 7, 30), datetime.datetime(2020, 10, 30)).launch()
-    FinalAntSummary(datetime.datetime(2020, 10, 30), datetime.datetime(2020, 11, 5)).launch()
+    start_dt = datetime.datetime(2001, 5, 8)
+    end_dt = datetime.datetime(2020, 11, 12)
+    dt = start_dt
+    while dt <= end_dt:
+        dt_next = dt + datetime.timedelta(days=1)
+        FinalAntSummary(dt, dt_next).launch()
+        dt = dt_next
