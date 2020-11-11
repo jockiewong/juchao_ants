@@ -49,3 +49,5 @@ sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
 python api_tests/ann_gener_demo.py
 '''
+
+# TODO -v 做文件映射不重新 built + 做一个 python/shell 部署脚本

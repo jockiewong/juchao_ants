@@ -113,7 +113,7 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
     def load_inc(self):
         self._spider2_init()
         self._yuqing_init()
-        deadline = datetime.datetime.now() - datetime.timedelta(days=2)
+        deadline = datetime.datetime.now() - datetime.timedelta(days=10)
 
         load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
 CREATETIMEJZ as InsertDatetime1 from juchao_ant where UPDATETIMEJZ > '{}'; '''.format(deadline)
