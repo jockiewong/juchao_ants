@@ -55,11 +55,11 @@ WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(self.table_name, 
                 _start, _end, sh_update_count, sz_update_count, sz_update_count2))
 
 # duck 不必
-#             delete_sql = '''delete from announcement_base where \
-# id >= {} and id <= {} and \
-# (SecuCode like '1%' or SecuCode like '2%' or SecuCode like '9%'); '''.format(_start, _end)
-#             delete_count = self.tonglian_client.delete(delete_sql)
-#             print("delete {}".format(delete_count))
+            delete_sql = '''delete from announcement_base where \
+id >= {} and id <= {} and \
+(SecuCode like '1%' or SecuCode like '2%' or SecuCode like '9%'); '''.format(_start, _end)
+            delete_count = self.tonglian_client.delete(delete_sql)
+            print("delete {}".format(delete_count))
 
             self.yuqing_client.end()
 
@@ -67,6 +67,10 @@ WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(self.table_name, 
 if __name__ == '__main__':
     # PrefixAdder('announcement_base').launch()
 
-    PrefixAdder('dc_ann_event_source_ann_detail').launch()
+    # PrefixAdder('dc_ann_event_source_ann_detail').launch()
+
+    # PrefixAdder('dc_ann_event_source_guba_detail').launch()
+
+    PrefixAdder('dc_ann_event_source_news_detail').launch()
 
     pass

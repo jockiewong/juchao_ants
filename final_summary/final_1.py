@@ -384,7 +384,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:]
     def get_post_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         # TODO 需要将股吧的中间表加上前缀
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
-and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2: ], event_code, min_trading_day, max_trading_day)
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:], event_code, min_trading_day, max_trading_day)
         count = self.yuqing_client.select_one(sql).get("count")
         return count
 
