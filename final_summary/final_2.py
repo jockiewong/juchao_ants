@@ -118,7 +118,7 @@ class FinalAntSummary(SpiderBase):
         self.get_sentiment_map()
 
         sql = '''select AnnID, SecuCode, PubTime, EventCode, Title, PDFLink from {} where PubTime  between '{}' and '{}'; '''.format(
-            self.source_table, self.start_time, self.end_time)
+            self.source_table, update_start, update_end)
         print(sql)
         self._yuqing_init()
         datas = self.yuqing_client.select_all(sql)
