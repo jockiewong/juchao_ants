@@ -39,26 +39,25 @@ class PrefixAdder(SpiderBase):
         self._yuqing_init()
         for start in range(max_id//self.batch_num + 1):
             _start, _end = start*self.batch_num, (start+1)*self.batch_num
-            sh_update_sql = '''UPDATE {} SET SecuCode=CONCAT('SH',SecuCode) \
+            sh_update_sql = '''UPDATE IGNORE {} SET SecuCode=CONCAT('SH',SecuCode) \
 WHERE id >= {} and id <= {} and SecuCode LIKE "6%"; '''.format(self.table_name, _start, _end)
             sh_update_count = self.yuqing_client.insert(sh_update_sql)
 
-            sz_update_sql = '''UPDATE {} SET SecuCode=CONCAT('SZ',SecuCode)\
+            sz_update_sql = '''UPDATE IGNORE {} SET SecuCode=CONCAT('SZ',SecuCode)\
 WHERE id >= {} and id <= {} and SecuCode LIKE "3%"; '''.format(self.table_name, _start, _end)
             sz_update_count = self.yuqing_client.insert(sz_update_sql)
 
-            sz_update_sql2 = '''UPDATE {} SET SecuCode=CONCAT('SZ',SecuCode)\
+            sz_update_sql2 = '''UPDATE IGNORE {} SET SecuCode=CONCAT('SZ',SecuCode)\
 WHERE id >= {} and id <= {} and SecuCode LIKE "0%"; '''.format(self.table_name, _start, _end)
             sz_update_count2 = self.yuqing_client.insert(sz_update_sql2)
 
             print("start: {}\t end: {}\t sh: {}\tsz_3: {}\tsz_0:{}".format(
                 _start, _end, sh_update_count, sz_update_count, sz_update_count2))
 
-# duck 不必
             delete_sql = '''delete from announcement_base where \
 id >= {} and id <= {} and \
-(SecuCode like '1%' or SecuCode like '2%' or SecuCode like '9%'); '''.format(_start, _end)
-            delete_count = self.tonglian_client.delete(delete_sql)
+(SecuCode like '1%' or SecuCode like '2%' or SecuCode like '9%' or SecuCode like '0%' or SecuCode like '3%' or SecuCode like '6%'); '''.format(_start, _end)
+            delete_count = self.yuqing_client.delete(delete_sql)
             print("delete {}".format(delete_count))
 
             self.yuqing_client.end()
@@ -69,8 +68,8 @@ if __name__ == '__main__':
 
     # PrefixAdder('dc_ann_event_source_ann_detail').launch()
 
-    # PrefixAdder('dc_ann_event_source_guba_detail').launch()
+    PrefixAdder('dc_ann_event_source_guba_detail').launch()
 
-    PrefixAdder('dc_ann_event_source_news_detail').launch()
+    # PrefixAdder('dc_ann_event_source_news_detail').launch()
 
     pass
