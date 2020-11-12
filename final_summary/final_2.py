@@ -35,6 +35,9 @@ import datetime
 import logging
 import os
 import sys
+import time
+
+import schedule
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
@@ -88,6 +91,64 @@ class FinalAntSummary(SpiderBase):
                 return day
             day -= datetime.timedelta(days=1)
 
+    def get_update_endtime(self):
+        self._yuqing_init()
+        sql = '''select max(PubTime) as max_pub from {};  '''.format(self.source_table)
+        try:
+            max_pub = self.yuqing_client.select_one(sql).get("max_pub")
+        except:
+            max_pub = None
+        return max_pub
+
+    def get_update_starttime(self):
+        self._yuqing_init()
+        sql = '''select max(TradeDate) as max_trd from {}; '''.format(self.target_table)
+        try:
+            max_trd = self.yuqing_client.select_one(sql).get("max_trd")
+        except:
+            max_trd = None
+        return max_trd
+
+    def daily_update(self):
+        update_end = self.get_update_endtime()
+        update_start = self.get_update_starttime()
+        print(update_start, update_end)
+
+        self.get_inner_code_map()
+        self.get_sentiment_map()
+
+        sql = '''select AnnID, SecuCode, PubTime, EventCode, Title, PDFLink from {} where PubTime  between '{}' and '{}'; '''.format(
+            self.source_table, self.start_time, self.end_time)
+        print(sql)
+        self._yuqing_init()
+        datas = self.yuqing_client.select_all(sql)
+        items = []
+        for data in datas:
+            ann_id = data.get("AnnID")
+            pub_time = data.get("PubTime")
+            event_code = data.get("EventCode")
+            title = data.get("Title")
+            link = data.get("PDFLink")
+            secu_code = data.get("SecuCode")
+
+            inner_code = self.codes_map.get(secu_code)
+            pub_day = datetime.datetime(pub_time.year, pub_time.month, pub_time.day)
+            trade_day = self.get_nearest_trading_day(pub_day)
+            sentiment = self.sent_map.get(event_code)
+            item = {}
+            item['SecuCode'] = secu_code
+            item['InnerCode'] = inner_code
+            item['TradeDate'] = trade_day
+            item['Sentiment'] = sentiment
+            item['EventCode'] = event_code
+            item['AnnID'] = ann_id
+            item['AnnTitle'] = title
+            item['Website'] = link
+            items.append(item)
+        print(len(items))
+        print(">>>>>> ", self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields))
+        self.yuqing_client.end()
+
     def launch(self):
         self.get_inner_code_map()
         self.get_sentiment_map()
@@ -127,10 +188,23 @@ class FinalAntSummary(SpiderBase):
 
 
 if __name__ == '__main__':
-    start_dt = datetime.datetime(2001, 5, 8)
-    end_dt = datetime.datetime(2020, 11, 12)
-    dt = start_dt
-    while dt <= end_dt:
-        dt_next = dt + datetime.timedelta(days=1)
-        FinalAntSummary(dt, dt_next).launch()
-        dt = dt_next
+    # history
+    # start_dt = datetime.datetime(2001, 5, 8)
+    # end_dt = datetime.datetime(2020, 11, 12)
+    # dt = start_dt
+    # while dt <= end_dt:
+    #     dt_next = dt + datetime.timedelta(days=1)
+    #     FinalAntSummary(dt, dt_next).launch()
+    #     dt = dt_next
+
+    # update
+    def task():
+        FinalAntSummary(None, None).daily_update()
+
+    task()
+    schedule.every(10).minutes.do(task)
+
+    while True:
+        schedule.run_pending()
+        print(schedule.jobs)
+        time.sleep(20)
