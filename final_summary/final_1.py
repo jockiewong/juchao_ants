@@ -97,7 +97,6 @@ Website - dc_ann_event_source_ann_detail 中的 PDFLink;
 Influence - 关联到的新闻在 dc_const_media_info 中对应的新闻源权重之和, 没有则赋值权重值为 1
 
 """
-
 '''辅助用表: 
 (1) 公告事件常量表: 
 CREATE TABLE `sf_const_announcement` (
@@ -189,17 +188,13 @@ CREATE TABLE `block_code` (
   KEY `code` (`code`,`name`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='板块股票关系' ; 
 '''
-import multiprocessing
-import pprint
-import time
-from concurrent.futures._base import as_completed
-from concurrent.futures.thread import ThreadPoolExecutor
-from functools import wraps
 
-import pymysql
 import os
 import sys
 import datetime
+import time
+import schedule
+from functools import wraps
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
@@ -220,7 +215,10 @@ def timing(func):
 
 
 class FinalAntDetail(SpiderBase):
-    def __init__(self, start_time: datetime.datetime, end_time: datetime.datetime):
+    def __init__(self,
+                 start_time: datetime.datetime = None,
+                 end_time: datetime.datetime = None,
+                 ):
         super(FinalAntDetail, self).__init__()
         self.source_table = 'dc_ann_event_source_ann_detail'
         self.target_table = 'sf_secu_announcement_detail'
@@ -235,15 +233,6 @@ class FinalAntDetail(SpiderBase):
         self.start_time = start_time
         self.end_time = end_time
         self.trading_days = None
-
-    # def get_single_client(self, conf: dict):
-    #     connection = pymysql.connect(host=conf.get("host"),
-    #                                  port=int(conf.get("port")),
-    #                                  user=conf.get("user"),
-    #                                  password=conf.get("password"),
-    #                                  db=conf.get("db"),
-    #                                  charset='utf8',)
-    #     return connection
 
     def get_inner_code_map(self):
         self._yuqing_init()
@@ -272,6 +261,7 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         :param end_dt:
         :return:
         """
+        self._yuqing_init()
         sql = '''select Date from  {} where SecuMarket = 83 and IfTradingDay = 1 and Date between '{}' and '{}'; '''.format(
             self.trading_table, start_dt, end_dt
         )
@@ -279,7 +269,6 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         trading_days = sorted([trading_day.get("Date") for trading_day in trading_days])
         return trading_days
 
-    @timing
     def get_after_five_trading_days(self, dt: datetime.datetime):
         """当日（包括当日之后的）5 个交易日
         将一段时间内的全部交易日全部拿出来放在一个列表中排序
@@ -287,9 +276,6 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         未击中时间范围时重新计算
         """
         self._yuqing_init()
-        if not self.trading_days:
-            self.trading_days = self.get_all_trading_days(self.start_time, self.end_time+datetime.timedelta(days=30))   # TODO
-
         while True:
             try:
                 _index = self.trading_days.index(dt)
@@ -323,31 +309,11 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
             else:
                 r_meds.append(med)
 
-        # if len(r_meds) != 0:
-        #     self._yuqing_init()
-        #     sql = '''select InfluenceWeight from dc_const_media_info where MedName in {}; '''.format(tuple(r_meds))
-        #     ret = self.yuqing_client.select_all(sql)
-        #
-        #     # yuqing_conn = self.get_single_client(self.yuqing_cfg)
-        #     # yuqing_cursor = yuqing_conn.cursor()
-        #     # try:
-        #     #     yuqing_cursor.execute(sql)
-        #     #     ret = yuqing_cursor.fetchall()
-        #     #     yuqing_conn.commit()
-        #     # except:
-        #     #     yuqing_conn.rollback()
-        #     #     raise Exception("数据库异常")
-        #
-        #     scores = [int(r.get("InfluenceWeight")) for r in ret]
-        #     # scores = [int(r[0]) for r in ret]
-        #     total_score += sum(scores)
-
         if len(r_meds) != 0:
             scores = [self.med_inf_map.get(r_med, 1) for r_med in r_meds]
             total_score += sum(scores)
         return total_score
 
-    @timing
     def get_news_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         """
         统计新闻发布时间在公告发布时间之后的所有关联篇数, 最多统计发布日之后的所有关联篇数，
@@ -356,30 +322,14 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         """
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
-
-        # yuqing_conn = self.get_single_client(self.yuqing_cfg)
-        # yuqing_cursor = yuqing_conn.cursor()
-        # try:
-        #     yuqing_cursor.execute(sql)
-        #     datas = yuqing_cursor.fetchall()
-        #     yuqing_conn.commit()
-        # except:
-        #     yuqing_conn.rollback()
-        #     raise Exception("数据库异常")
-
         datas = self.yuqing_client.select_all(sql)
-        print("sql :", sql)
         count = len(datas)
-        print("count: ", count)
         total_scores = 0
         if count != 0:
             meds = [data.get("MedName") for data in datas]  # dict
-            # meds = [data[0] for data in datas]   # tuple
-            print("meds:", meds)
             total_scores = self.get_meds_scores(meds)
         return count, total_scores
 
-    # @timing
     def get_post_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
 and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
@@ -390,7 +340,6 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         with open("final_1.log", "a") as f:
             f.write("{}\n".format(data))
 
-    @timing
     def process_data(self, data: dict):
         secu_code = data.get("SecuCode")
         inner_code = self.codes_map.get(secu_code)
@@ -414,63 +363,61 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
         item['PostNum'] = self.get_post_num(secu_code, event_code, min_trading_day, max_trading_day)
         return item
 
-    def launch(self):
+    def get_update_start(self):
+        # 获取更新的起始时间
+        self._yuqing_init()
+        try:
+            sql = '''select max(PubDatetime) as max_dt from {} ; '''.format(self.target_table)
+            max_dt = self.yuqing_client.select_one(sql).get("max_dt")
+        except:
+            max_dt = None
+        return max_dt
+
+    def get_update_end(self):
+        # 获取更新的结束时间
+        return datetime.datetime.now()
+
+    def daily_update(self):
+        update_start = self.get_update_start()
+        update_start = update_start - datetime.timedelta(days=7)
+        update_end = self.get_update_end()
+        print(update_start, update_end)
+
         self.get_inner_code_map()
         self.get_industry_code_map()
         self.get_med_inf_map()
+        if not self.trading_days:
+            self.trading_days = self.get_all_trading_days(update_start, update_end+datetime.timedelta(days=30))
 
         self._yuqing_init()
         sql = '''select SecuCode, EventCode, PubTime, PDFLink from {} where PubTime between '{}' and '{}'; '''.format(
-            self.source_table, self.start_time, self.end_time)
+            self.source_table, update_start, update_end)
         datas = self.yuqing_client.select_all(sql)
-        print("{} 到 {}这段时间的数据总量是 {}".format(self.start_time, self.end_time, len(datas)))
+        print("{} 到 {}这段时间的数据总量是 {}".format(update_start, update_end, len(datas)))
         items = []
-        # (1)
         for data in datas:
-            print("data is: ", data)
             item = self.process_data(data)
-            print("item is: ", item)
             items.append(item)
-
             if len(items) > 100:
                 self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                 self.yuqing_client.end()
                 items = []
-
-        # (2) TODO
-        # with ThreadPoolExecutor(max_workers=10) as t:
-        #     res = [t.submit(self.process_data, data) for data in datas]
-        # for future in as_completed(res):
-        #     item = future.result()
-        #     if item:
-        #         items.append(item)
-
         self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
         self.yuqing_client.end()
         self.log("{} - {} ok".format(self.start_time, self.end_time))
 
 
 if __name__ == '__main__':
-    def sub_dates(start_day, end_day, interval):
-        dates = []
-        dt = start_day
-        while dt <= end_day:
-            end_dt = dt + datetime.timedelta(days=interval)
-            dates.append([dt, end_dt])
-            dt = end_dt
-        return dates
+    # 2019-10-01 - 2020-10-01
 
-    # _start_time = datetime.datetime(2019, 10, 1)
-    # _end_time = datetime.datetime(2020, 10, 1)
+    def task():
+        fa = FinalAntDetail()
+        fa.daily_update()
 
-    _start_time = datetime.datetime(2020, 10, 1)
-    _end_time = datetime.datetime.now()
-    # fa = FinalAntDetail(_start_time, _end_time)
-    # fa.launch()
+    task()
 
-    def process_task(args):
-        start_time, end_time = args[0], args[1]
-        FinalAntDetail(start_time, end_time).launch()
-
-    with multiprocessing.Pool(8) as workers:
-        workers.map(process_task, sub_dates(_start_time, _end_time, 1))
+    schedule.every(5).hours.do(task)
+    while True:
+        schedule.run_pending()
+        time.sleep(20)
+        print(schedule.jobs)
