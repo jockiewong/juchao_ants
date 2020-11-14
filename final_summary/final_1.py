@@ -402,7 +402,7 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, ev
                 self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
                 self.yuqing_client.end()
                 items = []
-        self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields)
+        print("批量插入数据量是: ", self._batch_save(self.yuqing_client, items, self.target_table, self.target_fields))
         self.yuqing_client.end()
         self.log("{} - {} ok".format(self.start_time, self.end_time))
 
