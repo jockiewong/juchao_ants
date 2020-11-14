@@ -68,8 +68,8 @@ if __name__ == '__main__':
 
     # PrefixAdder('dc_ann_event_source_ann_detail').launch()
 
-    PrefixAdder('dc_ann_event_source_guba_detail').launch()
+    # PrefixAdder('dc_ann_event_source_guba_detail').launch()
 
-    # PrefixAdder('dc_ann_event_source_news_detail').launch()
+    PrefixAdder('dc_ann_event_source_news_detail').launch()
 
     pass

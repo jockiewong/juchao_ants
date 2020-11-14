@@ -354,9 +354,8 @@ B.name as SecuAbbr from block A, block_code B where A.type = 1 and A.id = B.bid 
         最多统计发布日(包括当日)之后的 5 个交易日之间的新闻,超过 5 个交易日就不需要去更新这条记录了.
         select * from dc_ann_event_source_news_detail A where A.SecuCode = '{}' and A.EventCode = '{}' and PubTime between {} amd {} ;
         """
-        # TODO 需要将新闻的 secucode 加上前缀
         sql = '''select MedName from dc_ann_event_source_news_detail where SecuCode = '{}' \
-and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:], event_code, min_trading_day, max_trading_day)
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
 
         # yuqing_conn = self.get_single_client(self.yuqing_cfg)
         # yuqing_cursor = yuqing_conn.cursor()
@@ -382,9 +381,8 @@ and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:]
 
     # @timing
     def get_post_num(self, secu_code: str, event_code: str, min_trading_day: datetime.datetime, max_trading_day: datetime.datetime):
-        # TODO 需要将股吧的中间表加上前缀
         sql = '''select count(*) as count from dc_ann_event_source_guba_detail where SecuCode = '{}' \
-and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code[2:], event_code, min_trading_day, max_trading_day)
+and EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(secu_code, event_code, min_trading_day, max_trading_day)
         count = self.yuqing_client.select_one(sql).get("count")
         return count
 
@@ -462,8 +460,11 @@ if __name__ == '__main__':
             dt = end_dt
         return dates
 
-    _start_time = datetime.datetime(2019, 10, 1)
-    _end_time = datetime.datetime(2020, 10, 1)
+    # _start_time = datetime.datetime(2019, 10, 1)
+    # _end_time = datetime.datetime(2020, 10, 1)
+
+    _start_time = datetime.datetime(2020, 10, 1)
+    _end_time = datetime.datetime.now()
     # fa = FinalAntDetail(_start_time, _end_time)
     # fa.launch()
 
