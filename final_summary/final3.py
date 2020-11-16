@@ -1,5 +1,4 @@
 '''
-
 CREATE TABLE `stk_quot_idx` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `Date` datetime NOT NULL COMMENT '日期',
@@ -109,13 +108,44 @@ FiveDayChgPerc
 
 此表的涨幅和胜率，每个交易日由程序刷新，其他字段交给后台管理。每日更新一次，每次更新的流程如下:
 (1) 获取事件代码列表: select EventCode from sf_const_announcement; // select distinct(EventCode) from sf_const_announcement;
+
 (2) 逐个事件代码遍历, 获取这个事件近一年的公告明细数据:
 select PubTime, SecuCode from dc_ann_event_source_ann_detail where EventCode = 'A0001001' and PubTime > '2019-11-16';
+
 (3) 根据取出的 SecuCode list 结合行情数据计算需生成的几个字段：
-select
+select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' order by Date limit {};
+遍历 SecuCode:
+    # 次日平均涨幅
+    [x, y] = [0.1, 0.2]
+    ret1 = (1+x)*(1+y) - 1
+    print(ret)
 
+    # 3 日平均涨幅
+    [x, y, z] = [0.1, 0.2, -0.1]
+    ret2 = (1+x)*(1+y)*(1+z) - 1
+    print(ret)
 
+    # 5 日平均涨幅
+    [x, y, z, m, n] = [0.1, 0.2, -0.1, -0.2, -0.3]
+    ret3 = (1+x)*(1+y)*(1+z)*(1+m)*(1+n) - 1
+    print(ret)
+    return [ret1, ret2, ret3]
 
+{
+"SecuCodde1": [ret1, ret2, ret3],
+"SecuCodde2": [ret1, ret2, ret3],
+"SecuCodde3": [ret1, ret2, ret3],
+"SecuCodde4": [ret1, ret2, ret3],
+...
+}
+纵向求平均
 
+# 什么是胜率: 涨跌幅大于 0 就是记作胜，小于等于 0 就记作败, 比如 100 个股票，20 个涨跌幅大于 0，他的胜率就是 20%
+
+# 当日的胜率
+[SecuCode1, SecuCode2, SecuCode3, SecuCode4 ] = [0.1, 0.2, -0.1, -0.2]     50%
+
+# 次日的胜率
+用次日的实际涨幅算
 '''
 
