@@ -241,10 +241,28 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
-    def generate_eventdaywinratio(self):
+    def generate_eventdaywinratio(self, detail_info: tuple):
         "计算证券列表的当日胜率与次日胜率"
+        winlist_onday = []
+        winlist_nextday = []
+        for event_happen_day, secucode in detail_info:
+            fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
+            # TODO None case
+            winlist_onday.append(float(fivedays_cpt[0]))
+            winlist_nextday.append(float(fivedays_cpt[1]))
 
-        pass
+        on_count = 0
+        for rate in winlist_onday:
+            if rate > 0:
+                on_count += 1
+        onday_winrate = on_count / len(winlist_onday)
+
+        next_count = 0
+        for rate in winlist_nextday:
+            if rate > 0:
+                next_count += 1
+        nextday_winrate = next_count / len(winlist_nextday)
+        return onday_winrate, nextday_winrate
 
     def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
         innercode = self.innercode_map.get(secucode)
