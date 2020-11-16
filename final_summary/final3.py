@@ -113,7 +113,7 @@ FiveDayChgPerc
 select PubTime, SecuCode from dc_ann_event_source_ann_detail where EventCode = 'A0001001' and PubTime > '2019-11-16';
 
 (3) 根据取出的 SecuCode list 结合行情数据计算需生成的几个字段：
-select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' order by Date limit {};
+select ChangePercActual from stk_quot_idx where InnerCode = '{}' and Date > '{}' order by Date limit {};
 遍历 SecuCode:
     # 次日平均涨幅
     [x, y] = [0.1, 0.2]
@@ -162,6 +162,7 @@ class FinalConstAnn(object):
         self.dc_table_name = 'stk_quot_idx'  # 日行情指标表 从 datacenter 数据库中获取
         self.target_table_name = 'sf_const_announcement'  # 目标数据库: 公告事件常量表
         self.source_table_name = 'dc_ann_event_source_ann_detail'  # 源数据库: 公告明细表
+        self.tool_table_name = 'secumain'
         self.dc_cfg = {  # datacenter 数据库的配置
             "host": DC_HOST,
             "port": int(DC_PORT),
@@ -180,6 +181,11 @@ class FinalConstAnn(object):
         }
         self.today = datetime.datetime.now()
         self.today_of_lastyear = self.today - datetime.timedelta(days=365)
+        self.innercode_map = None
+
+    def innercode_map_init(self):
+        if not self.innercode_map:
+            self.innercode_map = self.get_inner_code_map()
 
     def make_sql_conn(self, cfg: dict):
         try:
@@ -188,6 +194,23 @@ class FinalConstAnn(object):
         except:
             traceback.print_exc()
             return None
+
+    def get_inner_code_map(self):
+        sql = '''select SecuCode, InnerCode from {} where SecuCode in (select distinct(SecuCode) from {}); '''.format(self.tool_table_name, self.source_table_name)
+        __map = {}
+        try:
+            yq_conn = self.make_sql_conn(self.yq_cfg)
+            yq_cursor = yq_conn.cursor()
+            yq_cursor.execute(sql)
+            res = yq_cursor.fetchall()
+            for r in res:
+                __map[r[0]] = r[1]
+            yq_cursor.close()
+            yq_conn.close()
+            return __map
+        except:
+            traceback.print_exc()
+            return {}
 
     def const_event_codes(self):
         sql = '''select distinct(EventCode) from {};'''.format(self.target_table_name)
@@ -205,13 +228,7 @@ class FinalConstAnn(object):
             return []
 
     def get_event_detail(self, event_code: str):
-        '''
-        (2) 逐个事件代码遍历, 获取这个事件近一年的公告明细数据:
-        select PubTime, SecuCode from dc_ann_event_source_ann_detail where EventCode = 'A0001001' and PubTime > '2019-11-16';
-        '''
-        sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(
-            self.source_table_name, event_code, self.today_of_lastyear, self.today,
-        )
+        sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(self.source_table_name, event_code, self.today_of_lastyear, self.today)
         try:
             yq_conn = self.make_sql_conn(self.yq_cfg)
             yq_cursor = yq_conn.cursor()
@@ -219,6 +236,21 @@ class FinalConstAnn(object):
             res = yq_cursor.fetchall()
             yq_cursor.close()
             yq_conn.close()
+            return res
+        except:
+            traceback.print_exc()
+            return []
+
+    def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
+        innercode = self.innercode_map.get(secucode)
+        sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(self.dc_table_name, innercode, dt)
+        try:
+            dc_conn = self.make_sql_conn(self.dc_cfg)
+            dc_cursor = dc_conn.cursor()
+            dc_cursor.execute(sql)
+            res = dc_cursor.fetchall()
+            dc_cursor.close()
+            dc_conn.close()
             return res
         except:
             traceback.print_exc()
