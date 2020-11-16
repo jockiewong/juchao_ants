@@ -148,6 +148,7 @@ select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' 
 # 次日的胜率
 用次日的实际涨幅算
 '''
+from configs import DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB
 
 
 class FinalConstAnn(object):
@@ -156,7 +157,11 @@ class FinalConstAnn(object):
         self.target_table_name = 'sf_const_announcement'  # 目标数据库: 公告事件常量表
         self.source_table_name = 'dc_ann_event_source_ann_detail'  # 源数据库: 公告明细表
         self.dc_cfg = {  # datacenter 数据库的配置
-
+            "host": DC_HOST,
+            "port": DC_PORT,
+            "user": DC_USER,
+            "password": DC_PASSWD,
+            "db": DC_DB,
         }
         self.yq_cfg = {  # 舆情数据库的配置
 
