@@ -326,13 +326,31 @@ class FinalConstAnn(object):
             #  (datetime.datetime(2020, 9, 25, 0, 0), 'SZ002562'), ...)
 
             print(event_detail_info)
+            winlist_onday = []     # 针对事件的当日胜率与次日胜率
+            winlist_nextday = []
 
             secuCode_rate_info = {}
             for happen_dt, secuCode in event_detail_info:
                 # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
                 fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
+
+                winlist_onday.append(float(fiveday_rateinfo[0]))
+                winlist_nextday.append(float(fiveday_rateinfo[1]))
+
                 secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
                 # (5) 计算单只证券的 次\3\5日 累计涨幅
                 accumulated_rate1, accumulated_rate2, accumulated_rate3 = self.generate_changepercactual_index(fiveday_rateinfo)
                 secuCode_rate_info[secuCode]['accumulated_rates'] = [accumulated_rate1, accumulated_rate2, accumulated_rate3]
-                #
+
+            # (6) 计算当日胜率
+            on_count = 0
+            for rate in winlist_onday:
+                if rate > 0:
+                    on_count += 1
+            onday_winrate = on_count / len(winlist_onday)
+            # (7) 计算次日胜率
+            next_count = 0
+            for rate in winlist_nextday:
+                if rate > 0:
+                    next_count += 1
+            nextday_winrate = next_count / len(winlist_nextday)
