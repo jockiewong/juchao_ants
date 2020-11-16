@@ -285,7 +285,7 @@ class FinalConstAnn(object):
     def generate_changepercactual_index(self, index_datas):
         """计算单只证券的 次\3\5日 累计涨幅"""
         cpt_scores = [float(data[1]) for data in index_datas]
-        print("&&&&&", cpt_scores)
+        # print("&&&&&", cpt_scores)
 
         days_len = len(cpt_scores)
         x = y = z = m = n = None
@@ -301,7 +301,7 @@ class FinalConstAnn(object):
             x, y, z, m = cpt_scores
         else:
             x, y, z, m, n = cpt_scores
-        print("*****", x, y, z, m, n)
+        # print("*****", x, y, z, m, n)
         ret1 = ret2 = ret3 = None
         # 次日累计涨幅
         ret1 = (1 + x) * (1 + y) - 1
@@ -311,11 +311,11 @@ class FinalConstAnn(object):
             if m is not None and n is not None:
                 # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
-        print(">>>>>", ret1, ret2, ret3)
+        # print(">>>>>", ret1, ret2, ret3)
         return [ret1, ret2, ret3]
 
     def launch(self):
-        __final = {}     # 最终入库数据
+        records = []    # 最终入库数据
         self.innercode_map_init()
         # (1) 获取事件列表
         eventcode_lst = self.const_event_codes()
@@ -325,8 +325,11 @@ class FinalConstAnn(object):
             record["EventCode"] = eventcode
             # (3) 对于某一个事件来说， 近一年发生该事件的证券以及发生时间列表
             event_detail_info = self.get_event_detail(eventcode)
-            print(pprint.pformat(event_detail_info))
+            # print(pprint.pformat(event_detail_info))
             event_count = len(event_detail_info)
+            if event_count == 0:
+                print(f"NO RVENT OF CODE {eventcode}")
+                break
             winlist_onday = []     # 针对事件全部股票列表在时间发生时间的当日胜率与次日胜率
             winlist_nextday = []
 
@@ -335,13 +338,13 @@ class FinalConstAnn(object):
             total_rate3 = 0
             total_rate5 = 0
 
-            secuCode_rate_info = {}
+            # secuCode_rate_info = {}
             for happen_dt, secuCode in event_detail_info:
-                print()
-                print()
+                # print()
+                # print()
                 # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
                 fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
-                print(happen_dt, '\n', secuCode, '\n',  fiveday_rateinfo)
+                # print(happen_dt, '\n', secuCode, '\n',  fiveday_rateinfo)
                 winlist_onday.append(float(fiveday_rateinfo[0][1]))
                 winlist_nextday.append(float(fiveday_rateinfo[1][1]))
                 # secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
@@ -378,5 +381,26 @@ class FinalConstAnn(object):
             record['EventDayWinRatio'] = onday_winrate
             record['NextDayWinRatio'] = nextday_winrate
             print(pprint.pformat(record))
+            records.append(record)
+            # break
 
-            sys.exit(0)
+        yq_conn = self.make_sql_conn(self.yq_cfg)
+        yq_cursor = yq_conn.cursor()
+
+        for record in records:
+            sql = '''update {} set EventDayChgPerc={}, NextDayChgPerc={}, ThreeDayChgPerc={}, FiveDayChgPerc={}, EventDayWinRatio={},  NextDayWinRatio={} where EventCode = '{}'; '''.format(
+                self.target_table_name,
+                record.get("EventDayChgPerc"), record.get('NextDayChgPerc'), record.get('ThreeDayChgPerc'), record.get("FiveDayChgPerc"), record.get("EventDayWinRatio"), record.get("NextDayWinRatio"),
+                record.get("EventCode"),
+            )
+            print(sql)
+            try:
+                yq_cursor.execute(sql)
+                yq_conn.commit()
+            except:
+                traceback.print_exc()
+                yq_conn.rollback()
+                break
+
+        yq_cursor.close()
+        yq_conn.close()
