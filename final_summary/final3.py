@@ -149,3 +149,25 @@ select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' 
 用次日的实际涨幅算
 '''
 
+
+class FinalConstAnn(object):
+    def __init__(self):
+        self.dc_table_name = 'stk_quot_idx'  # 日行情指标表 从 datacenter 数据库中获取
+        self.target_table_name = 'sf_const_announcement'  # 目标数据库: 公告事件常量表
+        self.source_table_name = 'dc_ann_event_source_ann_detail'  # 源数据库: 公告明细表
+        self.dc_cfg = {  # datacenter 数据库的配置
+
+        }
+        self.yq_cfg = {  # 舆情数据库的配置
+
+        }
+
+    def sql_conn(self, cfg: dict):
+        pass
+
+    def const_event_codes(self):
+
+        pass
+
+    def launch(self):
+        pass
