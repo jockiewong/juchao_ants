@@ -148,6 +148,7 @@ select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' 
 # 次日的胜率
 用次日的实际涨幅算
 '''
+import datetime
 import traceback
 
 import pymysql
@@ -177,6 +178,8 @@ class FinalConstAnn(object):
             "db": YQ_DB,
             'charset': 'utf8'
         }
+        self.today = datetime.datetime.now()
+        self.today_of_lastyear = self.today - datetime.timedelta(days=365)
 
     def make_sql_conn(self, cfg: dict):
         try:
@@ -197,6 +200,26 @@ class FinalConstAnn(object):
             yq_conn.close()
             event_codes = [one[0] for one in res]
             return event_codes
+        except:
+            traceback.print_exc()
+            return []
+
+    def get_event_detail(self, event_code: str):
+        '''
+        (2) 逐个事件代码遍历, 获取这个事件近一年的公告明细数据:
+        select PubTime, SecuCode from dc_ann_event_source_ann_detail where EventCode = 'A0001001' and PubTime > '2019-11-16';
+        '''
+        sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(
+            self.source_table_name, event_code, self.today_of_lastyear, self.today,
+        )
+        try:
+            yq_conn = self.make_sql_conn(self.yq_cfg)
+            yq_cursor = yq_conn.cursor()
+            yq_cursor.execute(sql)
+            res = yq_cursor.fetchall()
+            yq_cursor.close()
+            yq_conn.close()
+            return res
         except:
             traceback.print_exc()
             return []
