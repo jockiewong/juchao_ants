@@ -241,6 +241,11 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
+    def generate_eventdaywinratio(self):
+        "计算证券列表的当日胜率与次日胜率"
+
+        pass
+
     def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
         innercode = self.innercode_map.get(secucode)
         sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(self.dc_table_name, innercode, dt)
@@ -256,9 +261,10 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
-    def process_changepercactual_index(self, index_datas):
+    def generate_changepercactual_index(self, index_datas):
+        """计算单只证券的 次\3\5日 累计涨幅"""
         cpt_scores = [float(data[1]) for data in index_datas]
-        print(cpt_scores)
+        # print(cpt_scores)
 
         days_len = len(cpt_scores)
         x = y = z = m = n = None
@@ -276,13 +282,13 @@ class FinalConstAnn(object):
             x, y, z, m, n = cpt_scores
 
         ret1 = ret2 = ret3 = None
-        # 次日平均涨幅
+        # 次日累计涨幅
         ret1 = (1 + x) * (1 + y) - 1
-        # 3 日平均涨幅
+        # 3 日累计涨幅
         if z:
             ret2 = (1 + x) * (1 + y) * (1 + z) - 1
             if m and n:
-                # 5 日平均涨幅
+                # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
         return [ret1, ret2, ret3]
 
