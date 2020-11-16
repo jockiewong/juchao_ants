@@ -148,6 +148,8 @@ select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' 
 # 次日的胜率
 用次日的实际涨幅算
 '''
+import pymysql
+
 from configs import (DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, YQ_HOST, YQ_PORT, YQ_USER,
                      YQ_PASSWD, YQ_DB, )
 
@@ -163,6 +165,7 @@ class FinalConstAnn(object):
             "user": DC_USER,
             "password": DC_PASSWD,
             "db": DC_DB,
+            'charset': 'utf8'
         }
         self.yq_cfg = {  # 舆情数据库的配置
             "host": YQ_HOST,
@@ -170,10 +173,12 @@ class FinalConstAnn(object):
             "user": YQ_USER,
             "password": YQ_PASSWD,
             "db": YQ_DB,
+            'charset': 'utf8'
         }
 
     def sql_conn(self, cfg: dict):
-        pass
+        conn = pymysql.connect(**cfg)
+        return conn
 
     def const_event_codes(self):
 
