@@ -149,11 +149,15 @@ select ChangePercActual from stk_quot_idx where InnerCode = '{}' and Date > '{}'
 用次日的实际涨幅算
 '''
 import datetime
+import os
 import pprint
 import sys
 import traceback
 
 import pymysql
+cur_path = os.path.split(os.path.realpath(__file__))[0]
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
+sys.path.insert(0, file_path)
 
 from configs import (DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, YQ_HOST, YQ_PORT, YQ_USER,
                      YQ_PASSWD, YQ_DB, )
@@ -318,9 +322,12 @@ class FinalConstAnn(object):
         records = []    # 最终入库数据
         self.innercode_map_init()
         # (1) 获取事件列表
-        eventcode_lst = self.const_event_codes()
+        eventcode_lst = self.const_event_codes()   # 57
+        # print(len(eventcode_lst))
+        # sys.exit(0)
         # (2) 遍历
         for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
+            print("NOW IS:", eventcode)
             record = {}
             record["EventCode"] = eventcode
             # (3) 对于某一个事件来说， 近一年发生该事件的证券以及发生时间列表
@@ -329,7 +336,7 @@ class FinalConstAnn(object):
             event_count = len(event_detail_info)
             if event_count == 0:
                 print(f"NO RVENT OF CODE {eventcode}")
-                break
+                continue
             winlist_onday = []     # 针对事件全部股票列表在时间发生时间的当日胜率与次日胜率
             winlist_nextday = []
 
@@ -382,7 +389,6 @@ class FinalConstAnn(object):
             record['NextDayWinRatio'] = nextday_winrate
             print(pprint.pformat(record))
             records.append(record)
-            # break
 
         yq_conn = self.make_sql_conn(self.yq_cfg)
         yq_cursor = yq_conn.cursor()
@@ -393,14 +399,14 @@ class FinalConstAnn(object):
                 record.get("EventDayChgPerc"), record.get('NextDayChgPerc'), record.get('ThreeDayChgPerc'), record.get("FiveDayChgPerc"), record.get("EventDayWinRatio"), record.get("NextDayWinRatio"),
                 record.get("EventCode"),
             )
-            print(sql)
             try:
                 yq_cursor.execute(sql)
                 yq_conn.commit()
             except:
+                print(sql)
                 traceback.print_exc()
                 yq_conn.rollback()
-                break
+                continue
 
         yq_cursor.close()
         yq_conn.close()
