@@ -187,8 +187,19 @@ class FinalConstAnn(object):
             return None
 
     def const_event_codes(self):
-
-        pass
+        sql = '''select distinct(EventCode) from {};'''.format(self.target_table_name)
+        try:
+            yq_conn = self.make_sql_conn(self.yq_cfg)
+            yq_cursor = yq_conn.cursor()
+            yq_cursor.execute(sql)
+            res = yq_cursor.fetchall()
+            yq_cursor.close()
+            yq_conn.close()
+            event_codes = [one[0] for one in res]
+            return event_codes
+        except:
+            traceback.print_exc()
+            return []
 
     def launch(self):
         pass
