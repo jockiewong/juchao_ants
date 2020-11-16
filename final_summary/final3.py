@@ -245,6 +245,7 @@ class FinalConstAnn(object):
         "计算证券列表的当日胜率与次日胜率"
         winlist_onday = []
         winlist_nextday = []
+
         for event_happen_day, secucode in detail_info:
             fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
             # TODO None case
@@ -311,4 +312,27 @@ class FinalConstAnn(object):
         return [ret1, ret2, ret3]
 
     def launch(self):
-        pass
+        __final = {}     # 最终入库数据
+        self.innercode_map_init()
+        # (1) 获取事件列表
+        eventcode_lst = self.const_event_codes()
+        # print(eventcode_lst)
+        # (2) 遍历
+        for eventcode in eventcode_lst:
+            print(eventcode)
+            # (3) 对于某一个事件来说， 近一年发生该事件的 证券 以及 发生时间
+            event_detail_info = self.get_event_detail(eventcode)
+            # eg. ((datetime.datetime(2020, 9, 15, 7, 43, 26), 'SZ000661'),
+            #  (datetime.datetime(2020, 9, 25, 0, 0), 'SZ002562'), ...)
+
+            print(event_detail_info)
+
+            secuCode_rate_info = {}
+            for happen_dt, secuCode in event_detail_info:
+                # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
+                fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
+                secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
+                # (5) 计算单只证券的 次\3\5日 累计涨幅
+                accumulated_rate1, accumulated_rate2, accumulated_rate3 = self.generate_changepercactual_index(fiveday_rateinfo)
+                secuCode_rate_info[secuCode]['accumulated_rates'] = [accumulated_rate1, accumulated_rate2, accumulated_rate3]
+                #
