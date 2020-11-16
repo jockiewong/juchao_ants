@@ -256,5 +256,35 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
+    def process_changepercactual_index(self, index_datas):
+        cpt_scores = [float(data[1]) for data in index_datas]
+        print(cpt_scores)
+
+        days_len = len(cpt_scores)
+        x = y = z = m = n = None
+
+        if days_len == 0 or days_len == 1:
+            return []
+
+        elif days_len == 2:
+            x, y = cpt_scores
+        elif days_len == 3:
+            x, y, z = cpt_scores
+        elif days_len == 4:
+            x, y, z, m = cpt_scores
+        else:
+            x, y, z, m, n = cpt_scores
+
+        ret1 = ret2 = ret3 = None
+        # 次日平均涨幅
+        ret1 = (1 + x) * (1 + y) - 1
+        # 3 日平均涨幅
+        if z:
+            ret2 = (1 + x) * (1 + y) * (1 + z) - 1
+            if m and n:
+                # 5 日平均涨幅
+                ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
+        return [ret1, ret2, ret3]
+
     def launch(self):
         pass
