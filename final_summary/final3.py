@@ -149,6 +149,8 @@ select ChangePercActual from stk_quot_idx where InnerCode = '{}' and Date > '{}'
 用次日的实际涨幅算
 '''
 import datetime
+import pprint
+import sys
 import traceback
 
 import pymysql
@@ -179,7 +181,7 @@ class FinalConstAnn(object):
             "db": YQ_DB,
             'charset': 'utf8'
         }
-        self.today = datetime.datetime.now()
+        self.today = datetime.datetime.now() - datetime.timedelta(days=10)   # TODO
         self.today_of_lastyear = self.today - datetime.timedelta(days=365)
         self.innercode_map = None
 
@@ -241,29 +243,29 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
-    def generate_eventdaywinratio(self, detail_info: tuple):
-        "计算证券列表的当日胜率与次日胜率"
-        winlist_onday = []
-        winlist_nextday = []
-
-        for event_happen_day, secucode in detail_info:
-            fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
-            # TODO None case
-            winlist_onday.append(float(fivedays_cpt[0]))
-            winlist_nextday.append(float(fivedays_cpt[1]))
-
-        on_count = 0
-        for rate in winlist_onday:
-            if rate > 0:
-                on_count += 1
-        onday_winrate = on_count / len(winlist_onday)
-
-        next_count = 0
-        for rate in winlist_nextday:
-            if rate > 0:
-                next_count += 1
-        nextday_winrate = next_count / len(winlist_nextday)
-        return onday_winrate, nextday_winrate
+    # def generate_eventdaywinratio(self, detail_info: tuple):
+    #     "计算证券列表的当日胜率与次日胜率"
+    #     winlist_onday = []
+    #     winlist_nextday = []
+    #
+    #     for event_happen_day, secucode in detail_info:
+    #         fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
+    #         # TODO None case
+    #         winlist_onday.append(float(fivedays_cpt[0]))
+    #         winlist_nextday.append(float(fivedays_cpt[1]))
+    #
+    #     on_count = 0
+    #     for rate in winlist_onday:
+    #         if rate > 0:
+    #             on_count += 1
+    #     onday_winrate = on_count / len(winlist_onday)
+    #
+    #     next_count = 0
+    #     for rate in winlist_nextday:
+    #         if rate > 0:
+    #             next_count += 1
+    #     nextday_winrate = next_count / len(winlist_nextday)
+    #     return onday_winrate, nextday_winrate
 
     def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
         innercode = self.innercode_map.get(secucode)
@@ -283,7 +285,7 @@ class FinalConstAnn(object):
     def generate_changepercactual_index(self, index_datas):
         """计算单只证券的 次\3\5日 累计涨幅"""
         cpt_scores = [float(data[1]) for data in index_datas]
-        # print(cpt_scores)
+        print("&&&&&", cpt_scores)
 
         days_len = len(cpt_scores)
         x = y = z = m = n = None
@@ -299,16 +301,17 @@ class FinalConstAnn(object):
             x, y, z, m = cpt_scores
         else:
             x, y, z, m, n = cpt_scores
-
+        print("*****", x, y, z, m, n)
         ret1 = ret2 = ret3 = None
         # 次日累计涨幅
         ret1 = (1 + x) * (1 + y) - 1
         # 3 日累计涨幅
-        if z:
+        if z is not None:
             ret2 = (1 + x) * (1 + y) * (1 + z) - 1
-            if m and n:
+            if m is not None and n is not None:
                 # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
+        print(">>>>>", ret1, ret2, ret3)
         return [ret1, ret2, ret3]
 
     def launch(self):
@@ -316,31 +319,39 @@ class FinalConstAnn(object):
         self.innercode_map_init()
         # (1) 获取事件列表
         eventcode_lst = self.const_event_codes()
-        # print(eventcode_lst)
         # (2) 遍历
-        for eventcode in eventcode_lst:
-            print(eventcode)
-            # (3) 对于某一个事件来说， 近一年发生该事件的 证券 以及 发生时间
+        for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
+            record = {}
+            record["EventCode"] = eventcode
+            # (3) 对于某一个事件来说， 近一年发生该事件的证券以及发生时间列表
             event_detail_info = self.get_event_detail(eventcode)
-            # eg. ((datetime.datetime(2020, 9, 15, 7, 43, 26), 'SZ000661'),
-            #  (datetime.datetime(2020, 9, 25, 0, 0), 'SZ002562'), ...)
-
-            print(event_detail_info)
-            winlist_onday = []     # 针对事件的当日胜率与次日胜率
+            print(pprint.pformat(event_detail_info))
+            event_count = len(event_detail_info)
+            winlist_onday = []     # 针对事件全部股票列表在时间发生时间的当日胜率与次日胜率
             winlist_nextday = []
+
+            total_rate = 0
+            total_rate2 = 0   # 针对事件全部股票列表在时间发生时间的次\3\5日平均涨幅
+            total_rate3 = 0
+            total_rate5 = 0
 
             secuCode_rate_info = {}
             for happen_dt, secuCode in event_detail_info:
+                print()
+                print()
                 # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
                 fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
-
-                winlist_onday.append(float(fiveday_rateinfo[0]))
-                winlist_nextday.append(float(fiveday_rateinfo[1]))
-
-                secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
+                print(happen_dt, '\n', secuCode, '\n',  fiveday_rateinfo)
+                winlist_onday.append(float(fiveday_rateinfo[0][1]))
+                winlist_nextday.append(float(fiveday_rateinfo[1][1]))
+                # secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
                 # (5) 计算单只证券的 次\3\5日 累计涨幅
-                accumulated_rate1, accumulated_rate2, accumulated_rate3 = self.generate_changepercactual_index(fiveday_rateinfo)
-                secuCode_rate_info[secuCode]['accumulated_rates'] = [accumulated_rate1, accumulated_rate2, accumulated_rate3]
+                accumulated_rate2, accumulated_rate3, accumulated_rate5 = self.generate_changepercactual_index(fiveday_rateinfo)
+                total_rate2 += accumulated_rate2
+                total_rate3 += accumulated_rate3
+                total_rate5 += accumulated_rate5
+                total_rate += float(fiveday_rateinfo[0][1])
+                # secuCode_rate_info[secuCode]['accumulated_rates'] = [accumulated_rate2, accumulated_rate3, accumulated_rate5]
 
             # (6) 计算当日胜率
             on_count = 0
@@ -354,3 +365,18 @@ class FinalConstAnn(object):
                 if rate > 0:
                     next_count += 1
             nextday_winrate = next_count / len(winlist_nextday)
+            # (8) 计算平均涨幅
+            average_rate = total_rate / event_count
+            average_rate2 = total_rate2 / event_count
+            average_rate3 = total_rate3 / event_count
+            average_rate5 = total_rate5 / event_count
+
+            record['EventDayChgPerc'] = average_rate
+            record['NextDayChgPerc'] = average_rate2
+            record['ThreeDayChgPerc'] = average_rate3
+            record['FiveDayChgPerc'] = average_rate5
+            record['EventDayWinRatio'] = onday_winrate
+            record['NextDayWinRatio'] = nextday_winrate
+            print(pprint.pformat(record))
+
+            sys.exit(0)
