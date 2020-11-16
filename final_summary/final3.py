@@ -148,6 +148,8 @@ select ChangePercActual from stk_quot_idx where SecuCode = '{}' and Date > '{}' 
 # 次日的胜率
 用次日的实际涨幅算
 '''
+import traceback
+
 import pymysql
 
 from configs import (DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, YQ_HOST, YQ_PORT, YQ_USER,
@@ -161,7 +163,7 @@ class FinalConstAnn(object):
         self.source_table_name = 'dc_ann_event_source_ann_detail'  # 源数据库: 公告明细表
         self.dc_cfg = {  # datacenter 数据库的配置
             "host": DC_HOST,
-            "port": DC_PORT,
+            "port": int(DC_PORT),
             "user": DC_USER,
             "password": DC_PASSWD,
             "db": DC_DB,
@@ -169,16 +171,20 @@ class FinalConstAnn(object):
         }
         self.yq_cfg = {  # 舆情数据库的配置
             "host": YQ_HOST,
-            "port": YQ_PORT,
+            "port": int(YQ_PORT),
             "user": YQ_USER,
             "password": YQ_PASSWD,
             "db": YQ_DB,
             'charset': 'utf8'
         }
 
-    def sql_conn(self, cfg: dict):
-        conn = pymysql.connect(**cfg)
-        return conn
+    def make_sql_conn(self, cfg: dict):
+        try:
+            conn = pymysql.connect(**cfg)
+            return conn
+        except:
+            traceback.print_exc()
+            return None
 
     def const_event_codes(self):
 
