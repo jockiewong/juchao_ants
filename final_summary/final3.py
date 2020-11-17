@@ -185,7 +185,8 @@ class FinalConstAnn(object):
             "db": YQ_DB,
             'charset': 'utf8'
         }
-        self.today = datetime.datetime.now() - datetime.timedelta(days=10)   # TODO
+        # self.today = datetime.datetime.now() - datetime.timedelta(days=10)
+        self.today = datetime.datetime.now()
         self.today_of_lastyear = self.today - datetime.timedelta(days=365)
         self.innercode_map = None
 
@@ -273,6 +274,8 @@ class FinalConstAnn(object):
 
     def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
         innercode = self.innercode_map.get(secucode)
+        if not innercode:
+            return []
         sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(self.dc_table_name, innercode, dt)
         try:
             dc_conn = self.make_sql_conn(self.dc_cfg)
@@ -289,7 +292,7 @@ class FinalConstAnn(object):
     def generate_changepercactual_index(self, index_datas):
         """计算单只证券的 次\3\5日 累计涨幅"""
         cpt_scores = [float(data[1]) for data in index_datas]
-        # print("&&&&&", cpt_scores)
+        print("&&&&&", cpt_scores)
 
         days_len = len(cpt_scores)
         x = y = z = m = n = None
@@ -305,7 +308,7 @@ class FinalConstAnn(object):
             x, y, z, m = cpt_scores
         else:
             x, y, z, m, n = cpt_scores
-        # print("*****", x, y, z, m, n)
+        print("*****", x, y, z, m, n)
         ret1 = ret2 = ret3 = None
         # 次日累计涨幅
         ret1 = (1 + x) * (1 + y) - 1
@@ -315,7 +318,7 @@ class FinalConstAnn(object):
             if m is not None and n is not None:
                 # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
-        # print(">>>>>", ret1, ret2, ret3)
+        print(">>>>>", ret1, ret2, ret3)
         return [ret1, ret2, ret3]
 
     def launch(self):
@@ -323,8 +326,7 @@ class FinalConstAnn(object):
         self.innercode_map_init()
         # (1) 获取事件列表
         eventcode_lst = self.const_event_codes()   # 57
-        # print(len(eventcode_lst))
-        # sys.exit(0)
+        print(len(eventcode_lst))
         # (2) 遍历
         for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
             print("NOW IS:", eventcode)
@@ -332,7 +334,7 @@ class FinalConstAnn(object):
             record["EventCode"] = eventcode
             # (3) 对于某一个事件来说， 近一年发生该事件的证券以及发生时间列表
             event_detail_info = self.get_event_detail(eventcode)
-            # print(pprint.pformat(event_detail_info))
+            print(f"EVENT DETAIL COUNT: {len(event_detail_info)}")
             event_count = len(event_detail_info)
             if event_count == 0:
                 print(f"NO RVENT OF CODE {eventcode}")
@@ -351,7 +353,10 @@ class FinalConstAnn(object):
                 # print()
                 # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
                 fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
-                # print(happen_dt, '\n', secuCode, '\n',  fiveday_rateinfo)
+                print(happen_dt, '\n', secuCode, '\n',  fiveday_rateinfo)
+                if fiveday_rateinfo == list() or len(fiveday_rateinfo) != 5:
+                    print(f"{secuCode} - {happen_dt} 5 日数据不足")
+                    continue
                 winlist_onday.append(float(fiveday_rateinfo[0][1]))
                 winlist_nextday.append(float(fiveday_rateinfo[1][1]))
                 # secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
