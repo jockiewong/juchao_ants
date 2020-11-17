@@ -153,7 +153,9 @@ import multiprocessing
 import os
 import pprint
 import sys
+import time
 import traceback
+from functools import wraps
 
 import pymysql
 cur_path = os.path.split(os.path.realpath(__file__))[0]
@@ -162,6 +164,19 @@ sys.path.insert(0, file_path)
 
 from configs import (DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, YQ_HOST, YQ_PORT, YQ_USER,
                      YQ_PASSWD, YQ_DB, )
+
+
+def timing(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        r = func(*args, **kwargs)
+        end = time.perf_counter()
+        print('[' + func.__name__ + ']used:' + str(end - start))
+        with open('final3.log', "a") as f:
+            f.write('[' + func.__name__ + str(args[1]) + ']used:' + str(end - start) + '\n')
+        return r
+    return wrapper
 
 
 class FinalConstAnn(object):
@@ -256,7 +271,6 @@ class FinalConstAnn(object):
     #
     #     for event_happen_day, secucode in detail_info:
     #         fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
-    #         # TODO None case
     #         winlist_onday.append(float(fivedays_cpt[0]))
     #         winlist_nextday.append(float(fivedays_cpt[1]))
     #
@@ -322,6 +336,7 @@ class FinalConstAnn(object):
         print(">>>>>", ret1, ret2, ret3)
         return [ret1, ret2, ret3]
 
+    @timing
     def process_single_eventcode(self, eventcode: str):
         print("NOW IS:", eventcode)
         record = {}
@@ -343,8 +358,6 @@ class FinalConstAnn(object):
 
         # secuCode_rate_info = {}
         for happen_dt, secuCode in event_detail_info:
-            # print()
-            # print()
             # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
             fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
             print(happen_dt, '\n', secuCode, '\n', fiveday_rateinfo)
@@ -390,11 +403,30 @@ class FinalConstAnn(object):
         print(pprint.pformat(record))
         return record
 
+    def save_record(self, record):
+        yq_conn = self.make_sql_conn(self.yq_cfg)
+        yq_cursor = yq_conn.cursor()
+        sql = '''update {} set EventDayChgPerc={}, NextDayChgPerc={}, ThreeDayChgPerc={}, FiveDayChgPerc={}, EventDayWinRatio={},  NextDayWinRatio={} where EventCode = '{}'; '''.format(
+            self.target_table_name,
+            record.get("EventDayChgPerc"), record.get('NextDayChgPerc'), record.get('ThreeDayChgPerc'),
+            record.get("FiveDayChgPerc"), record.get("EventDayWinRatio"), record.get("NextDayWinRatio"),
+            record.get("EventCode"),
+        )
+        print(sql)
+        try:
+            yq_cursor.execute(sql)
+            yq_conn.commit()
+        except:
+            print("error: ", sql)
+            traceback.print_exc()
+            yq_conn.rollback()
+        yq_cursor.close()
+        yq_conn.close()
+
     def launch(self):
-        records = []    # 最终入库数据
         self.innercode_map_init()
         # (1) 获取事件列表
-        eventcode_lst = self.const_event_codes()   # 57
+        eventcode_lst = sorted(self.const_event_codes())    # 57
         print(len(eventcode_lst))
 
         # (2) 遍历 (多进程)
@@ -407,30 +439,4 @@ class FinalConstAnn(object):
         for res in result:
             record = res.get()
             if record is not None:
-                records.append(record)
-
-        # # (2) 遍历(单进程)
-        # for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
-        #     record = self.process_single_eventcode(eventcode)
-        #     if record is not None:
-        #         records.append(record)
-
-        yq_conn = self.make_sql_conn(self.yq_cfg)
-        yq_cursor = yq_conn.cursor()
-        for record in records:
-            sql = '''update {} set EventDayChgPerc={}, NextDayChgPerc={}, ThreeDayChgPerc={}, FiveDayChgPerc={}, EventDayWinRatio={},  NextDayWinRatio={} where EventCode = '{}'; '''.format(
-                self.target_table_name,
-                record.get("EventDayChgPerc"), record.get('NextDayChgPerc'), record.get('ThreeDayChgPerc'), record.get("FiveDayChgPerc"), record.get("EventDayWinRatio"), record.get("NextDayWinRatio"),
-                record.get("EventCode"),
-            )
-            try:
-                yq_cursor.execute(sql)
-                yq_conn.commit()
-            except:
-                print(sql)
-                traceback.print_exc()
-                yq_conn.rollback()
-                continue
-
-        yq_cursor.close()
-        yq_conn.close()
+                self.save_record(record)
