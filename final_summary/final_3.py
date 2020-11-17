@@ -309,7 +309,7 @@ class FinalConstAnn(object):
     def generate_changepercactual_index(self, index_datas):
         """计算单只证券的 次\3\5日 累计涨幅"""
         cpt_scores = [float(data[1]) for data in index_datas]
-        print("&&&&&", cpt_scores)
+        # print("&&&&&", cpt_scores)
 
         days_len = len(cpt_scores)
         x = y = z = m = n = None
@@ -325,7 +325,7 @@ class FinalConstAnn(object):
             x, y, z, m = cpt_scores
         else:
             x, y, z, m, n = cpt_scores
-        print("*****", x, y, z, m, n)
+        # print("*****", x, y, z, m, n)
         ret1 = ret2 = ret3 = None
         # 次日累计涨幅
         ret1 = (1 + x) * (1 + y) - 1
@@ -335,7 +335,7 @@ class FinalConstAnn(object):
             if m is not None and n is not None:
                 # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
-        print(">>>>>", ret1, ret2, ret3)
+        # print(">>>>>", ret1, ret2, ret3)
         return [ret1, ret2, ret3]
 
     @timing
@@ -362,7 +362,7 @@ class FinalConstAnn(object):
         for happen_dt, secuCode in event_detail_info:
             # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
             fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
-            print(happen_dt, '\n', secuCode, '\n', fiveday_rateinfo)
+            # print(happen_dt, '\n', secuCode, '\n', fiveday_rateinfo)
             if fiveday_rateinfo == list() or len(fiveday_rateinfo) != 5:
                 print(f"{secuCode} - {happen_dt} 5 日数据不足")
                 continue
@@ -403,6 +403,8 @@ class FinalConstAnn(object):
         record['EventDayWinRatio'] = onday_winrate
         record['NextDayWinRatio'] = nextday_winrate
         print(pprint.pformat(record))
+        if record is not None:
+            self.save_record(record)
         return record
 
     def save_record(self, record):
@@ -438,10 +440,11 @@ class FinalConstAnn(object):
             result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
         pool.close()
         pool.join()
-        for res in result:
-            record = res.get()
-            if record is not None:
-                self.save_record(record)
+
+        # for res in result:
+        #     record = res.get()
+        #     if record is not None:
+        #         self.save_record(record)
 
 
 if __name__ == '__main__':
