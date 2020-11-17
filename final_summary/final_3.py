@@ -319,25 +319,36 @@ class FinalConstAnn(object):
         return [ret1*100, ret2*100, ret3*100]
 
     def crate_temp_table(self):
-        # fields = ['code', 'event_code', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc', 'd5acc']
+        # fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc', 'd5acc']
         sql = '''
-        CREATE TABLE IF NOT EXISTS `temp_test`(
-           `code` varchar(50) NOT NULL COMMENT '事件代码',
-           `event_code` varchar(50) NOT NULL COMMENT '事件代码',
-           `d1rate` decimal(10,4) NOT NULL,
-           `d2rate` decimal(10,4) NOT NULL,
-           `d3rate` decimal(10,4) NOT NULL,
-           `d4rate` decimal(10,4) NOT NULL,
-           `d5rate` decimal(10,4) NOT NULL,
-           `d1acc` decimal(10,4) NOT NULL,
-           `d2acc` decimal(10,4) NOT NULL,
-           `d3acc` decimal(10,4) NOT NULL,
-           `d5acc` decimal(10,4) NOT NULL,
-           PRIMARY KEY ( `code` ), 
-           UNIQUE KEY `u1` (`event_code`,`code`) 
-        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE IF NOT EXISTS `temp_test`(
+   `event_code` varchar(50) NOT NULL COMMENT '事件代码',
+   `code` varchar(50) NOT NULL COMMENT '事件代码',
+   `date` datetime NOT NULL COMMENT '日期',
+   `d1rate` decimal(10,4) NOT NULL,
+   `d2rate` decimal(10,4) NOT NULL,
+   `d3rate` decimal(10,4) NOT NULL,
+   `d4rate` decimal(10,4) NOT NULL,
+   `d5rate` decimal(10,4) NOT NULL,
+   `d1acc` decimal(10,4) NOT NULL,
+   `d2acc` decimal(10,4) NOT NULL,
+   `d3acc` decimal(10,4) NOT NULL,
+   `d5acc` decimal(10,4) NOT NULL,
+   PRIMARY KEY ( `code` ), 
+   UNIQUE KEY `u1` (`event_code`,`code`, `date`) 
+)ENGINE=InnoDB DEFAULT CHARSET=utf8;
         '''
         print(sql)
+        yq_conn = self.make_sql_conn(self.yq_cfg)
+        yq_cursor = yq_conn.cursor()
+        try:
+            yq_cursor.execute(sql)
+            yq_conn.commit()
+        except:
+            traceback.print_exc()
+            yq_conn.rollback()
+        yq_cursor.close()
+        yq_conn.close()
 
     def contract_sql(self, datas, table: str, update_fields: list):
         """拼接 sql 语句"""
@@ -410,6 +421,7 @@ class FinalConstAnn(object):
 
             temp_record['event_code'] = eventcode
             temp_record['code'] = secuCode
+            temp_record['date'] = happen_dt
             temp_record['d1rate'] = fiveday_rateinfo[0][1]
             temp_record['d2rate'] = fiveday_rateinfo[1][1]
             temp_record['d3rate'] = fiveday_rateinfo[2][1]
@@ -433,7 +445,7 @@ class FinalConstAnn(object):
             temp_record['d2acc'] = accumulated_rate2
             temp_record['d3acc'] = accumulated_rate3
             temp_record['d5acc'] = accumulated_rate5
-            fields = ['code', 'event_code', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc',
+            fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc',
                       'd5acc']
             self._save_middle_datas(temp_record, "temp_test", fields)
 
