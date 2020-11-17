@@ -221,7 +221,8 @@ class FinalConstAnn(object):
             return None
 
     def get_inner_code_map(self):
-        sql = '''select SecuCode, InnerCode from {} where SecuCode in (select distinct(SecuCode) from {}); '''.format(self.tool_table_name, self.source_table_name)
+        sql = '''select SecuCode, InnerCode from {} where SecuCode in (select distinct(SecuCode) from {}); '''.format(
+            self.tool_table_name, self.source_table_name)
         __map = {}
         try:
             yq_conn = self.make_sql_conn(self.yq_cfg)
@@ -253,7 +254,8 @@ class FinalConstAnn(object):
             return []
 
     def get_event_detail(self, event_code: str):
-        sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(self.source_table_name, event_code, self.today_of_lastyear, self.today)
+        sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(
+            self.source_table_name, event_code, self.today_of_lastyear, self.today)
         try:
             yq_conn = self.make_sql_conn(self.yq_cfg)
             yq_cursor = yq_conn.cursor()
@@ -266,34 +268,12 @@ class FinalConstAnn(object):
             traceback.print_exc()
             return []
 
-    # def generate_eventdaywinratio(self, detail_info: tuple):
-    #     "计算证券列表的当日胜率与次日胜率"
-    #     winlist_onday = []
-    #     winlist_nextday = []
-    #
-    #     for event_happen_day, secucode in detail_info:
-    #         fivedays_cpt = self.get_fivedays_changepercactual(secucode, event_happen_day)
-    #         winlist_onday.append(float(fivedays_cpt[0]))
-    #         winlist_nextday.append(float(fivedays_cpt[1]))
-    #
-    #     on_count = 0
-    #     for rate in winlist_onday:
-    #         if rate > 0:
-    #             on_count += 1
-    #     onday_winrate = on_count / len(winlist_onday)
-    #
-    #     next_count = 0
-    #     for rate in winlist_nextday:
-    #         if rate > 0:
-    #             next_count += 1
-    #     nextday_winrate = next_count / len(winlist_nextday)
-    #     return onday_winrate, nextday_winrate
-
     def get_fivedays_changepercactual(self, secucode: str, dt: datetime.datetime):
         innercode = self.innercode_map.get(secucode)
         if not innercode:
             return []
-        sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(self.dc_table_name, innercode, dt)
+        sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(
+            self.dc_table_name, innercode, dt)
         try:
             dc_conn = self.make_sql_conn(self.dc_cfg)
             dc_cursor = dc_conn.cursor()
@@ -308,7 +288,7 @@ class FinalConstAnn(object):
 
     def generate_changepercactual_index(self, index_datas):
         """计算单只证券的 次\3\5日 累计涨幅"""
-        cpt_scores = [float(data[1]) for data in index_datas]
+        cpt_scores = [float(data[1])/100 for data in index_datas]
         # print("&&&&&", cpt_scores)
 
         days_len = len(cpt_scores)
@@ -336,7 +316,72 @@ class FinalConstAnn(object):
                 # 5 日累计涨幅
                 ret3 = (1 + x) * (1 + y) * (1 + z) * (1 + m) * (1 + n) - 1
         # print(">>>>>", ret1, ret2, ret3)
-        return [ret1, ret2, ret3]
+        return [ret1*100, ret2*100, ret3*100]
+
+    def crate_temp_table(self):
+        # fields = ['code', 'event_code', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc', 'd5acc']
+        sql = '''
+        CREATE TABLE IF NOT EXISTS `temp_test`(
+           `code` varchar(50) NOT NULL COMMENT '事件代码',
+           `event_code` varchar(50) NOT NULL COMMENT '事件代码',
+           `d1rate` decimal(10,4) NOT NULL,
+           `d2rate` decimal(10,4) NOT NULL,
+           `d3rate` decimal(10,4) NOT NULL,
+           `d4rate` decimal(10,4) NOT NULL,
+           `d5rate` decimal(10,4) NOT NULL,
+           `d1acc` decimal(10,4) NOT NULL,
+           `d2acc` decimal(10,4) NOT NULL,
+           `d3acc` decimal(10,4) NOT NULL,
+           `d5acc` decimal(10,4) NOT NULL,
+           PRIMARY KEY ( `code` ), 
+           UNIQUE KEY `u1` (`event_code`,`code`) 
+        )ENGINE=InnoDB DEFAULT CHARSET=utf8;
+        '''
+        print(sql)
+
+    def contract_sql(self, datas, table: str, update_fields: list):
+        """拼接 sql 语句"""
+        if not isinstance(datas, list):
+            datas = [datas, ]
+
+        to_insert = datas[0]
+        ks = []
+        vs = []
+        for k in to_insert:
+            ks.append(k)
+            vs.append(to_insert.get(k))
+        fields_str = "(" + ",".join(ks) + ")"
+        values_str = "(" + "%s," * (len(vs) - 1) + "%s" + ")"
+        base_sql = '''INSERT INTO `{}` '''.format(table) + fields_str + ''' values ''' + values_str
+        params = []
+        for data in datas:
+            vs = []
+            for k in ks:
+                vs.append(data.get(k))
+            params.append(vs)
+        if update_fields:
+            on_update_sql = ''' ON DUPLICATE KEY UPDATE '''
+            for update_field in update_fields:
+                on_update_sql += '{}=values({}),'.format(update_field, update_field)
+            on_update_sql = on_update_sql.rstrip(",")
+            sql = base_sql + on_update_sql + """;"""
+        else:
+            sql = base_sql + ";"
+        return sql, params
+
+    def _save_middle_datas(self, to_insert, table, update_fields):
+        yq_conn = self.make_sql_conn(self.yq_cfg)
+        yq_cursor = yq_conn.cursor()
+        try:
+            insert_sql, values = self.contract_sql(to_insert, table, update_fields)
+            value = values[0]
+            yq_cursor.execute(insert_sql, value)
+            yq_conn.commit()
+        except:
+            traceback.print_exc()
+            yq_conn.rollback()
+        yq_cursor.close()
+        yq_conn.close()
 
     @timing
     def process_single_eventcode(self, eventcode: str):
@@ -358,17 +403,24 @@ class FinalConstAnn(object):
         total_rate3 = 0
         total_rate5 = 0
 
-        # secuCode_rate_info = {}
         for happen_dt, secuCode in event_detail_info:
+            temp_record = dict()
             # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
             fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
-            # print(happen_dt, '\n', secuCode, '\n', fiveday_rateinfo)
+
+            temp_record['event_code'] = eventcode
+            temp_record['code'] = secuCode
+            temp_record['d1rate'] = fiveday_rateinfo[0][1]
+            temp_record['d2rate'] = fiveday_rateinfo[1][1]
+            temp_record['d3rate'] = fiveday_rateinfo[2][1]
+            temp_record['d4rate'] = fiveday_rateinfo[3][1]
+            temp_record['d5rate'] = fiveday_rateinfo[4][1]
+
             if fiveday_rateinfo == list() or len(fiveday_rateinfo) != 5:
                 print(f"{secuCode} - {happen_dt} 5 日数据不足")
                 continue
             winlist_onday.append(float(fiveday_rateinfo[0][1]))
             winlist_nextday.append(float(fiveday_rateinfo[1][1]))
-            # secuCode_rate_info[secuCode]['fiveday_rateinfo'] = fiveday_rateinfo
             # (5) 计算单只证券的 次\3\5日 累计涨幅
             accumulated_rate2, accumulated_rate3, accumulated_rate5 = self.generate_changepercactual_index(
                 fiveday_rateinfo)
@@ -376,7 +428,14 @@ class FinalConstAnn(object):
             total_rate3 += accumulated_rate3
             total_rate5 += accumulated_rate5
             total_rate += float(fiveday_rateinfo[0][1])
-            # secuCode_rate_info[secuCode]['accumulated_rates'] = [accumulated_rate2, accumulated_rate3, accumulated_rate5]
+
+            temp_record['d1acc'] = temp_record['d1rate']
+            temp_record['d2acc'] = accumulated_rate2
+            temp_record['d3acc'] = accumulated_rate3
+            temp_record['d5acc'] = accumulated_rate5
+            fields = ['code', 'event_code', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc',
+                      'd5acc']
+            self._save_middle_datas(temp_record, "temp_test", fields)
 
         # (6) 计算当日胜率
         on_count = 0
@@ -428,6 +487,7 @@ class FinalConstAnn(object):
         yq_conn.close()
 
     def launch(self):
+        self.crate_temp_table()
         self.innercode_map_init()
         # (1) 获取事件列表
         eventcode_lst = sorted(self.const_event_codes())    # 57
