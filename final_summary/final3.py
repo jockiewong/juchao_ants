@@ -158,6 +158,8 @@ import traceback
 from functools import wraps
 
 import pymysql
+import schedule
+
 cur_path = os.path.split(os.path.realpath(__file__))[0]
 file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
@@ -440,3 +442,22 @@ class FinalConstAnn(object):
             record = res.get()
             if record is not None:
                 self.save_record(record)
+
+
+if __name__ == '__main__':
+    restart_run = int(os.environ.get("RUN", 0))
+
+    def task():
+        start_time = time.time()
+        final3 = FinalConstAnn()
+        final3.launch()
+        print(f"用时: {time.time() - start_time}")
+
+    if restart_run:
+        task()
+
+    schedule.every().day.at("15:02").do(task)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(20)
