@@ -149,6 +149,7 @@ select ChangePercActual from stk_quot_idx where InnerCode = '{}' and Date > '{}'
 用次日的实际涨幅算
 '''
 import datetime
+import multiprocessing
 import os
 import pprint
 import sys
@@ -395,15 +396,27 @@ class FinalConstAnn(object):
         # (1) 获取事件列表
         eventcode_lst = self.const_event_codes()   # 57
         print(len(eventcode_lst))
-        # (2) 遍历
-        for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
-            record = self.process_single_eventcode(eventcode)
+
+        # (2) 遍历 (多进程)
+        pool = multiprocessing.Pool(processes=8)
+        result = []
+        for eventcode in eventcode_lst:
+            result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
+        pool.close()
+        pool.join()
+        for res in result:
+            record = res.get()
             if record is not None:
                 records.append(record)
 
+        # # (2) 遍历(单进程)
+        # for eventcode in eventcode_lst:    # 生成mysql数据库中的一行数据
+        #     record = self.process_single_eventcode(eventcode)
+        #     if record is not None:
+        #         records.append(record)
+
         yq_conn = self.make_sql_conn(self.yq_cfg)
         yq_cursor = yq_conn.cursor()
-
         for record in records:
             sql = '''update {} set EventDayChgPerc={}, NextDayChgPerc={}, ThreeDayChgPerc={}, FiveDayChgPerc={}, EventDayWinRatio={},  NextDayWinRatio={} where EventCode = '{}'; '''.format(
                 self.target_table_name,
