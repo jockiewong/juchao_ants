@@ -71,7 +71,7 @@ python final_summary/final_sf_secu_announcement_detail.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name final3 --env LOCAL=0 --env VPN=0 --env RUN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python final_summary/final_3.py
+python final_summary/final_sf_const_announcement.py
 '''
 
 
