@@ -56,7 +56,7 @@ python middle_tables/ann_gener_demo.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name final2 --env LOCAL=0 --env VPN=0 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python final_summary/final_2.py
+python final_summary/final_sf_secu_announcement_summary.py
 '''
 
 
