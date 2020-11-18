@@ -165,7 +165,7 @@ file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
 
 from configs import (DC_HOST, DC_PORT, DC_USER, DC_PASSWD, DC_DB, YQ_HOST, YQ_PORT, YQ_USER,
-                     YQ_PASSWD, YQ_DB, )
+                     YQ_PASSWD, YQ_DB, LOCAL)
 
 
 def timing(func):
@@ -207,6 +207,8 @@ class FinalConstAnn(object):
         self.today = datetime.datetime.now()
         self.today_of_lastyear = self.today - datetime.timedelta(days=365)
         self.innercode_map = None
+        self.temp_fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate',
+                            'd5rate', 'd1acc', 'd2acc', 'd3acc', 'd5acc', ]
 
     def innercode_map_init(self):
         if not self.innercode_map:
@@ -273,7 +275,8 @@ class FinalConstAnn(object):
         innercode = self.innercode_map.get(secucode)
         if not innercode:
             return []
-        sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' order by Date limit 5;'''.format(
+        sql = '''select Date, ChangePercActual from {} where InnerCode = '{}' and Date >= '{}' \
+order by Date limit 5;'''.format(
             self.dc_table_name, innercode, dt)
         try:
             dc_conn = self.make_sql_conn(self.dc_cfg)
@@ -320,7 +323,6 @@ class FinalConstAnn(object):
         return [ret1*100, ret2*100, ret3*100]
 
     def crate_temp_table(self):
-        # fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc', 'd5acc']
         sql = '''
 CREATE TABLE IF NOT EXISTS `temp_test`(
    `event_code` varchar(50) NOT NULL COMMENT '事件代码',
@@ -446,10 +448,8 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
             temp_record['d2acc'] = accumulated_rate2
             temp_record['d3acc'] = accumulated_rate3
             temp_record['d5acc'] = accumulated_rate5
-            fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc',
-                      'd5acc']
             print(temp_record)
-            self._save_middle_datas(temp_record, "temp_test", fields)
+            self._save_middle_datas(temp_record, "temp_test", self.temp_fields)
 
         # (6) 计算当日胜率
         on_count = 0
@@ -514,44 +514,38 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
         # ret = sorted(list(set(eventcode_lst) - set(al_lst)))
         # ret = ['A001004']
         ret = eventcode_lst
-        # 遍历
-        for event_code in ret:
-            print(event_code)
-            self.process_single_eventcode(event_code)
 
-        # # (2) 遍历 (多进程)
-        # pool = multiprocessing.Pool(processes=8)
-        # result = []
-        # for eventcode in eventcode_lst:
-        #     result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
-        # pool.close()
-        # pool.join()
+        # # 遍历（单进程）
+        # for event_code in ret:
+        #     print(event_code)
+        #     self.process_single_eventcode(event_code)
+
+        # (2) 遍历 (多进程)
+        pool = multiprocessing.Pool(processes=8)
+        result = []
+        for eventcode in ret:
+            result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
+        pool.close()
+        pool.join()
 
 
 if __name__ == '__main__':
-    restart_run = int(os.environ.get("RUN", 0))
-
     def task():
         start_time = time.time()
         final3 = FinalConstAnn()
         final3.launch()
         print(f"用时: {time.time() - start_time}")
 
-    if restart_run:
+    if LOCAL:
         task()
+    else:
+        restart_run = int(os.environ.get("RUN", 0))
 
-    schedule.every().day.at("15:02").do(task)
+        if restart_run:
+            task()
 
-    while True:
-        schedule.run_pending()
-        time.sleep(20)
+        schedule.every().day.at("15:02").do(task)
 
-    # temp test
-    # task()
-    # '''
-    # 'A006003', 'A006003', 'A004004', 'A005008', 'A004006', 'A004002', 'A005010', 'A003001', 'A003004', 'A006007',
-    # 'A003002', 'A006006', 'A005006', 'A006002', 'A005004', 'A005001', 'A002003', 'A005003', 'A006005', 'A004005',
-    # 'A005009', 'A004011', 'A005007', 'A003005', 'A002002', 'A001006', 'A006004', 'A002006', 'A005002', 'A004001',
-    # 'A004003', 'A002001', 'A006001', 'A002005', 'A001008', 'A006008', 'A006009', 'A005005'
-    #
-    # '''
+        while True:
+            schedule.run_pending()
+            time.sleep(20)
