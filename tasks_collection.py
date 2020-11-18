@@ -32,14 +32,14 @@ python scripts/trans_2tl.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name guba --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python api_tests/guba_gener_demo.py
+python middle_tables/guba_gener_demo.py
 '''
 
 '''news 
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name news --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python api_tests/news_gener_demo.py
+python middle_tables/news_gener_demo.py
 
 '''
 
@@ -47,7 +47,7 @@ python api_tests/news_gener_demo.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name ann --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python api_tests/ann_gener_demo.py
+python middle_tables/ann_gener_demo.py
 '''
 
 # TODO -v 做文件映射不重新 built + 做一个 python/shell 部署脚本
