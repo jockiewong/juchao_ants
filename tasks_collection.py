@@ -39,7 +39,7 @@ python middle_tables/middle_dc_ann_event_source_guba_detail.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name news --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python middle_tables/news_gener_demo.py
+python middle_tables/middle_dc_ann_event_source_news_detail.py
 
 '''
 
