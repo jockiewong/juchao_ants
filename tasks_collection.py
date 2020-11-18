@@ -32,7 +32,7 @@ python scripts/trans_2tl.py
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name guba --env LOCAL=1  --env VPN=1 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python middle_tables/guba_gener_demo.py
+python middle_tables/middle_dc_ann_event_source_guba_detail.py
 '''
 
 '''news 
