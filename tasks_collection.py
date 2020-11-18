@@ -9,7 +9,7 @@ sudo docker pull registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1
 sudo docker run --log-opt max-size=10m --log-opt max-file=3 \
 -itd --name jclive --env LOCAL=0 \
 registry.cn-shenzhen.aliyuncs.com/jzdev/jzdata/juchao_base:v1 \
-python livenews/single_spider.py
+python livenews/juchao_livenews_spider.py
 '''
 
 
