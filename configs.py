@@ -90,11 +90,18 @@ else:
     YQ_DB = env.get("YQ_DB", cf.get('yuqing2', 'YQ_DB'))
 
 # 通联库
-TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
-TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
-TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
-TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
-TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+if LOCAL:
+    TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
+    TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+    TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
+    TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
+    TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
+else:
+    TL_HOST = env.get("TL_HOST", cf.get('tonglian2', 'TL_HOST'))
+    TL_PORT = env.get("TL_PORT", cf.get('tonglian2', 'TL_PORT'))
+    TL_USER = env.get("TL_USER", cf.get('tonglian2', 'TL_USER'))
+    TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian2', 'TL_PASSWD'))
+    TL_DB = env.get("TL_DB", cf.get('tonglian2', 'TL_DB'))
 
 # 主题猎手数据库
 THE_HOST = env.get("THE_HOST", cf.get('theme', 'THE_HOST'))
@@ -116,12 +123,3 @@ else:
     PRODUCT_MYSQL_USER = env.get("PRODUCT_MYSQL_USER", cf.get('product', 'PRODUCT_MYSQL_USER'))
     PRODUCT_MYSQL_PASSWORD = env.get("PRODUCT_MYSQL_PASSWORD", cf.get('product', 'PRODUCT_MYSQL_PASSWORD'))
     PRODUCT_MYSQL_DB = env.get("PRODUCT_MYSQL_DB", cf.get('product', 'PRODUCT_MYSQL_DB'))
-
-
-if __name__ == "__main__":
-    import sys
-    mod = sys.modules[__name__]
-    attrs = dir(mod)
-    attrs = [attr for attr in attrs if not attr.startswith("__") and attr.isupper()]
-    for attr in attrs:
-        print(attr, ":", getattr(mod, attr))
