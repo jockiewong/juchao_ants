@@ -213,8 +213,10 @@ class LaunchSpider(SpiderBase):
                 'isHLtitle': True,
             }
             resp = requests.post(self.api, headers=self.headers, data=post_data, timeout=3)
+            print(resp)
             if resp.status_code == 200:
                 text = resp.text
+                # print(text)
                 if text == '':
                     break
 
@@ -232,7 +234,8 @@ class LaunchSpider(SpiderBase):
                     time_stamp = ant.get("announcementTime") / 1000
                     item.update({'AntTime': datetime.datetime.fromtimestamp(time_stamp)})
                     item.update({'AntDoc': 'http://static.cninfo.com.cn/' + ant.get("adjunctUrl")})
-                    self._save(self.spider_client, item, self.history_table_name, self.fields)
+                    print(item)
+                    print("SAVE RES: ", self._save(self.spider_client, item, self.history_table_name, self.fields))
             else:
                 print(resp)
 
