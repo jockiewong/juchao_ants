@@ -175,8 +175,8 @@ def timing(func):
         r = func(*args, **kwargs)
         end = time.perf_counter()
         print('[' + func.__name__ + ']used:' + str(end - start))
-        with open('final3.log', "a") as f:
-            f.write('[' + func.__name__ + str(args[1]) + ']used:' + str(end - start) + '\n')
+        # with open('final3.log', "a") as f:
+        #     f.write('[' + func.__name__ + str(args[1]) + ']used:' + str(end - start) + '\n')
         return r
     return wrapper
 
@@ -256,6 +256,7 @@ class FinalConstAnn(object):
     def get_event_detail(self, event_code: str):
         sql = '''select PubTime, SecuCode from {} where EventCode = '{}' and PubTime between '{}' and '{}' ;'''.format(
             self.source_table_name, event_code, self.today_of_lastyear, self.today)
+        print(sql)
         try:
             yq_conn = self.make_sql_conn(self.yq_cfg)
             yq_cursor = yq_conn.cursor()
@@ -334,7 +335,6 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
    `d2acc` decimal(10,4) NOT NULL,
    `d3acc` decimal(10,4) NOT NULL,
    `d5acc` decimal(10,4) NOT NULL,
-   PRIMARY KEY ( `code` ), 
    UNIQUE KEY `u1` (`event_code`,`code`, `date`) 
 )ENGINE=InnoDB DEFAULT CHARSET=utf8;
         '''
@@ -419,6 +419,10 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
             # (4) 获取单只证券在发生时间后(包括当日)的5日涨幅
             fiveday_rateinfo = self.get_fivedays_changepercactual(secuCode, happen_dt)
 
+            if fiveday_rateinfo == list() or len(fiveday_rateinfo) != 5:
+                print(f"{secuCode} - {happen_dt} 5 日数据不足")
+                continue
+
             temp_record['event_code'] = eventcode
             temp_record['code'] = secuCode
             temp_record['date'] = happen_dt
@@ -428,9 +432,6 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
             temp_record['d4rate'] = fiveday_rateinfo[3][1]
             temp_record['d5rate'] = fiveday_rateinfo[4][1]
 
-            if fiveday_rateinfo == list() or len(fiveday_rateinfo) != 5:
-                print(f"{secuCode} - {happen_dt} 5 日数据不足")
-                continue
             winlist_onday.append(float(fiveday_rateinfo[0][1]))
             winlist_nextday.append(float(fiveday_rateinfo[1][1]))
             # (5) 计算单只证券的 次\3\5日 累计涨幅
@@ -447,6 +448,7 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
             temp_record['d5acc'] = accumulated_rate5
             fields = ['event_code', 'code', 'date', 'd1rate', 'd2rate', 'd3rate', 'd4rate', 'd5rate', 'd1acc', 'd2acc', 'd3acc',
                       'd5acc']
+            print(temp_record)
             self._save_middle_datas(temp_record, "temp_test", fields)
 
         # (6) 计算当日胜率
@@ -503,20 +505,27 @@ CREATE TABLE IF NOT EXISTS `temp_test`(
         self.innercode_map_init()
         # (1) 获取事件列表
         eventcode_lst = sorted(self.const_event_codes())    # 57
-        print(len(eventcode_lst))
+        # print(len(eventcode_lst))
+        # al_lst = ['A006003', 'A006003', 'A004004', 'A005008', 'A004006', 'A004002', 'A005010', 'A003001',
+        #           'A003004', 'A006007', 'A003002', 'A006006', 'A005006', 'A006002', 'A005004', 'A005001',
+        #           'A002003', 'A005003', 'A006005', 'A004005', 'A005009', 'A004011', 'A005007', 'A003005',
+        #           'A002002', 'A001006', 'A006004', 'A002006', 'A005002', 'A004001', 'A004003', 'A002001',
+        #           'A006001', 'A002005', 'A001008', 'A006008', 'A006009', 'A005005']
+        # ret = sorted(list(set(eventcode_lst) - set(al_lst)))
+        # ret = ['A001004']
+        ret = eventcode_lst
+        # 遍历
+        for event_code in ret:
+            print(event_code)
+            self.process_single_eventcode(event_code)
 
-        # (2) 遍历 (多进程)
-        pool = multiprocessing.Pool(processes=8)
-        result = []
-        for eventcode in eventcode_lst:
-            result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
-        pool.close()
-        pool.join()
-
-        # for res in result:
-        #     record = res.get()
-        #     if record is not None:
-        #         self.save_record(record)
+        # # (2) 遍历 (多进程)
+        # pool = multiprocessing.Pool(processes=8)
+        # result = []
+        # for eventcode in eventcode_lst:
+        #     result.append(pool.apply_async(self.process_single_eventcode, (eventcode, )))
+        # pool.close()
+        # pool.join()
 
 
 if __name__ == '__main__':
@@ -536,3 +545,13 @@ if __name__ == '__main__':
     while True:
         schedule.run_pending()
         time.sleep(20)
+
+    # temp test
+    # task()
+    # '''
+    # 'A006003', 'A006003', 'A004004', 'A005008', 'A004006', 'A004002', 'A005010', 'A003001', 'A003004', 'A006007',
+    # 'A003002', 'A006006', 'A005006', 'A006002', 'A005004', 'A005001', 'A002003', 'A005003', 'A006005', 'A004005',
+    # 'A005009', 'A004011', 'A005007', 'A003005', 'A002002', 'A001006', 'A006004', 'A002006', 'A005002', 'A004001',
+    # 'A004003', 'A002001', 'A006001', 'A002005', 'A001008', 'A006008', 'A006009', 'A005005'
+    #
+    # '''
