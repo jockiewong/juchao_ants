@@ -39,9 +39,32 @@ class JuchaoFinanceSpider(object):
             password=SPIDER_MYSQL_PASSWORD,
             database=SPIDER_MYSQL_DB,
         )
-        self.history_table_name = 'juchao_ant'  # 巨潮历史公告表
+        self.history_table_name = 'juchao_ant_finance'  # 巨潮历史公告(财务相关)表
+
+    def _create_table(self):
+        create_sql = '''
+         CREATE TABLE IF NOT EXISTS `juchao_ant_finance` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `SecuCode` varchar(8) NOT NULL COMMENT '证券代码',
+          `SecuAbbr` varchar(16) NOT NULL COMMENT '证券代码',
+          `AntId` int(20) NOT NULL COMMENT '巨潮自带公告 ID',
+          `AntTime` datetime NOT NULL COMMENT '发布时间',
+          `AntTitle` varchar(128) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '资讯标题',
+          `AntDoc` varchar(256) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL COMMENT '公告详情页链接',
+          `CREATETIMEJZ` datetime DEFAULT CURRENT_TIMESTAMP,
+          `UPDATETIMEJZ` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `ant_id` (`AntId`),
+          KEY `ant_time` (`AntTime`),
+          KEY `secucode` (`SecuCode`),
+          KEY `update_time` (`UPDATETIMEJZ`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='巨潮个股财务类公告' ; 
+        '''
+        self._spider_conn.insert(create_sql)
 
     def start(self, start_date=None):
+        self._create_table()
+
         if start_date is None:
             start_date = datetime.datetime.today() - datetime.timedelta(days=10)
 
@@ -60,7 +83,7 @@ class JuchaoFinanceSpider(object):
                 'stock': '',
                 'searchkey': '',
                 'secid': '',
-                'category': '',
+                'category': 'category_ndbg_szsh;category_bndbg_szsh;category_yjdbg_szsh;category_sjdbg_szsh;category_yjygjxz_szsh',
                 'trade': '',
                 'seDate': se_date,
                 'sortName': '',
