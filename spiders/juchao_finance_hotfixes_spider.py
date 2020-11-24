@@ -63,6 +63,7 @@ class JuchaoFinanceSpider(object):
         self._spider_conn.insert(create_sql)
 
     def start(self, start_date=None, end_date=None):
+        '''网站限制 一次最多只有一年的数据'''
         self._create_table()
 
         if start_date is None:
