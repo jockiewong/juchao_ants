@@ -14,9 +14,9 @@ from summary.final_sf_secu_announcement_summary import FinalAntSummary
 # final_const.launch()
 
 
-final_detail = FinalAntDetail()
-final_detail.daily_update()
+# final_detail = FinalAntDetail()
+# final_detail.daily_update()
 
 
-# final_summary = FinalAntSummary()
-# final_summary.daily_update()
+final_summary = FinalAntSummary()
+final_summary.daily_update()
