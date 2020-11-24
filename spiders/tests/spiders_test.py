@@ -14,5 +14,6 @@ from spiders.juchao_livenews_spider import JuchaoLiveNewsSpider
 
 finance_his = JuchaoFinanceSpider()
 _now = datetime.datetime.now()
-_start = datetime.datetime(_now.year - 3, _now.month, _now.day)
-finance_his.start(start_date=_start)
+_start = datetime.datetime(_now.year - 4, _now.month, _now.day)
+_end = datetime.datetime(_now.year - 3, _now.month, _now.day)
+finance_his.start(start_date=_start, end_date=_end)
