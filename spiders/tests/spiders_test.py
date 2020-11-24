@@ -1,3 +1,5 @@
+import datetime
+
 from spiders.juchao_finance_hotfixes_spider import JuchaoFinanceSpider
 from spiders.juchao_historyants_spider import JuchaoHistorySpider
 from spiders.juchao_livenews_spider import JuchaoLiveNewsSpider
@@ -11,4 +13,6 @@ from spiders.juchao_livenews_spider import JuchaoLiveNewsSpider
 # jc_his.start()
 
 finance_his = JuchaoFinanceSpider()
-finance_his.start()
+_now = datetime.datetime.now()
+_start = datetime.datetime(_now.year - 3, _now.month, _now.day)
+finance_his.start(start_date=_start)
