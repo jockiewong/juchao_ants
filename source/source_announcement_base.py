@@ -112,7 +112,8 @@ from juchao_ant limit {}, {}; '''.format(start * self.batch_number, self.batch_n
 
     def load_inc(self):
         self._spider2_init()
-        self._yuqing_init()
+        # self._yuqing_init()
+        self._spider_init()
         deadline = datetime.datetime.now() - datetime.timedelta(days=10)
 
         load_sql = '''select id, SecuCode, SecuAbbr, AntTime as PubDatetime1, AntTitle as Title1, AntDoc as PDFLink, \
@@ -146,14 +147,15 @@ and A.code = B.SecuCode and A.link = B.AntDoc and A.type = '公告';  '''.format
                 data.get("link")
             )
             # print(sql)
-            count = self.yuqing_client.insert(sql)
+            # count = self.yuqing_client.insert(sql)
+            count = self.spider_client.insert(sql)
             if count == 1:
                 print("插入新数据 {}".format(data))
             elif count == 0:
                 print("已有数据 {} ".format(data))
             else:
                 print("count is {}".format(count))
-            self.yuqing_client.end()
+            self.spider_client.end()
 
     def start(self):
         # self.load_his_ants()
