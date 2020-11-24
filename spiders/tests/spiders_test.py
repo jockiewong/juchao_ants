@@ -3,14 +3,18 @@ import datetime
 from spiders.juchao_finance_hotfixes_spider import JuchaoFinanceSpider
 from spiders.juchao_historyants_spider import JuchaoHistorySpider
 from spiders.juchao_livenews_spider import JuchaoLiveNewsSpider
+from spiders.source_announcement_base import SourceAnnouncementBase
 
-# jclive = JuchaoLiveNewsSpider()
-# print(jclive.get_secu_abbr("990018"))
-# jclive._create_table()
-# jclive.start()
+jclive = JuchaoLiveNewsSpider()
+print(jclive.get_secu_abbr("990018"))
+jclive._create_table()
+jclive.start()
 
-# jc_his = JuchaoHistorySpider()
-# jc_his.start()
+jc_his = JuchaoHistorySpider()
+jc_his.start()
+
+jc_merge = SourceAnnouncementBase()
+jc_merge.launch()
 
 
 # 最近 5 年的财务数据

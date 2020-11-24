@@ -78,13 +78,13 @@ else:
 # 内网舆情测试库
 if LOCAL:
     YQ_HOST = env.get("YQ_HOST", cf.get('yuqing', 'YQ_HOST'))
-    YQ_PORT = env.get("YQ_PORT", cf.get('yuqing', 'YQ_PORT'))
+    YQ_PORT = int(env.get("YQ_PORT", cf.get('yuqing', 'YQ_PORT')))
     YQ_USER = env.get("YQ_USER", cf.get('yuqing', 'YQ_USER'))
     YQ_PASSWD = env.get("YQ_PASSWD", cf.get('yuqing', 'YQ_PASSWD'))
     YQ_DB = env.get("YQ_DB", cf.get('yuqing', 'YQ_DB'))
 else:
     YQ_HOST = env.get("YQ_HOST", cf.get('yuqing2', 'YQ_HOST'))
-    YQ_PORT = env.get("YQ_PORT", cf.get('yuqing2', 'YQ_PORT'))
+    YQ_PORT = int(env.get("YQ_PORT", cf.get('yuqing2', 'YQ_PORT')))
     YQ_USER = env.get("YQ_USER", cf.get('yuqing2', 'YQ_USER'))
     YQ_PASSWD = env.get("YQ_PASSWD", cf.get('yuqing2', 'YQ_PASSWD'))
     YQ_DB = env.get("YQ_DB", cf.get('yuqing2', 'YQ_DB'))
@@ -92,20 +92,20 @@ else:
 # 通联库
 if LOCAL:
     TL_HOST = env.get("TL_HOST", cf.get('tonglian', 'TL_HOST'))
-    TL_PORT = env.get("TL_PORT", cf.get('tonglian', 'TL_PORT'))
+    TL_PORT = int(env.get("TL_PORT", cf.get('tonglian', 'TL_PORT')))
     TL_USER = env.get("TL_USER", cf.get('tonglian', 'TL_USER'))
     TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian', 'TL_PASSWD'))
     TL_DB = env.get("TL_DB", cf.get('tonglian', 'TL_DB'))
 else:
     TL_HOST = env.get("TL_HOST", cf.get('tonglian2', 'TL_HOST'))
-    TL_PORT = env.get("TL_PORT", cf.get('tonglian2', 'TL_PORT'))
+    TL_PORT = int(env.get("TL_PORT", cf.get('tonglian2', 'TL_PORT')))
     TL_USER = env.get("TL_USER", cf.get('tonglian2', 'TL_USER'))
     TL_PASSWD = env.get("TL_PASSWD", cf.get('tonglian2', 'TL_PASSWD'))
     TL_DB = env.get("TL_DB", cf.get('tonglian2', 'TL_DB'))
 
 # 主题猎手数据库
 THE_HOST = env.get("THE_HOST", cf.get('theme', 'THE_HOST'))
-THE_PORT = env.get("THE_PORT", cf.get('theme', 'THE_PORT'))
+THE_PORT = int(env.get("THE_PORT", cf.get('theme', 'THE_PORT')))
 THE_USER = env.get("THE_USER", cf.get('theme', 'THE_USER'))
 THE_PASSWD = env.get("THE_PASSWD", cf.get('theme', 'THE_PASSWD'))
 THE_DB = env.get("THE_DB", cf.get('theme', 'THE_DB'))
@@ -119,7 +119,7 @@ if LOCAL:
     PRODUCT_MYSQL_DB = TEST_MYSQL_DB
 else:
     PRODUCT_MYSQL_HOST = env.get("PRODUCT_MYSQL_HOST", cf.get('product', 'PRODUCT_MYSQL_HOST'))
-    PRODUCT_MYSQL_PORT = env.get("PRODUCT_MYSQL_PORT", cf.get('product', 'PRODUCT_MYSQL_PORT'))
+    PRODUCT_MYSQL_PORT = int(env.get("PRODUCT_MYSQL_PORT", cf.get('product', 'PRODUCT_MYSQL_PORT')))
     PRODUCT_MYSQL_USER = env.get("PRODUCT_MYSQL_USER", cf.get('product', 'PRODUCT_MYSQL_USER'))
     PRODUCT_MYSQL_PASSWORD = env.get("PRODUCT_MYSQL_PASSWORD", cf.get('product', 'PRODUCT_MYSQL_PASSWORD'))
     PRODUCT_MYSQL_DB = env.get("PRODUCT_MYSQL_DB", cf.get('product', 'PRODUCT_MYSQL_DB'))
