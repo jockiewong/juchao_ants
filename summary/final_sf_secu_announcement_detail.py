@@ -194,7 +194,7 @@ import sys
 import datetime
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
-file_path = os.path.abspath(os.path.join(cur_path, "../.."))
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
 
 from configs import YQ_HOST, YQ_PORT, YQ_USER, YQ_PASSWD, YQ_DB, THE_HOST, THE_PORT, THE_USER, THE_PASSWD, THE_DB

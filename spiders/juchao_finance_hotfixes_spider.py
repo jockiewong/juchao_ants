@@ -6,7 +6,7 @@ import sys
 import requests
 
 cur_path = os.path.split(os.path.realpath(__file__))[0]
-file_path = os.path.abspath(os.path.join(cur_path, "../.."))
+file_path = os.path.abspath(os.path.join(cur_path, ".."))
 sys.path.insert(0, file_path)
 
 from configs import (SPIDER_MYSQL_HOST, SPIDER_MYSQL_PORT, SPIDER_MYSQL_USER, SPIDER_MYSQL_PASSWORD,
