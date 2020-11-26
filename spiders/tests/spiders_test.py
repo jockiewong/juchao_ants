@@ -20,16 +20,11 @@ from spiders.source_announcement_base import SourceAnnouncementBase
 
 # 最近 5 年的财务数据
 finance_his = JuchaoFinanceSpider()
-# _now = datetime.datetime.now()
-# for num in range(5):
-#     print(num)
-#     _start = datetime.datetime(_now.year - num - 1, _now.month, _now.day)
-#     _end = datetime.datetime(_now.year - num, _now.month, _now.day)
-#     print("年份: ", _start, _end)
-#     finance_his.start(start_date=_start, end_date=_end)
-#     time.sleep(10)
-
-# 存量更新
-while True:
-    finance_his.start()
-    time.sleep(180)
+_now = datetime.datetime.now()
+for num in range(5):
+    print(num)
+    _start = datetime.datetime(_now.year - num - 1, _now.month, _now.day)
+    _end = datetime.datetime(_now.year - num, _now.month, _now.day)
+    print("年份: ", _start, _end)
+    finance_his.start(start_date=_start, end_date=_end)
+    time.sleep(10)

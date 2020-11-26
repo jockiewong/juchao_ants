@@ -89,6 +89,7 @@ class JuchaoFinanceSpider(object):
                              'category_yjdbg_szsh',
                              'category_sjdbg_szsh',
                              'category_yjygjxz_szsh',
+                             # 'category_yjkb_szsh',    # 自定义业绩快报类型
                              ):
                 post_data = {
                     'pageNum': page,
@@ -135,10 +136,56 @@ class JuchaoFinanceSpider(object):
                         time_stamp = ant.get("announcementTime") / 1000
                         item.update({'AntTime': datetime.datetime.fromtimestamp(time_stamp)})
                         item.update({'AntDoc': 'http://static.cninfo.com.cn/' + ant.get("adjunctUrl")})
-                        print(item)
+                        # print(item)
                         self._spider_conn.table_insert(self.history_table_name, item)
                 else:
                     print(resp)
+
+        # 搜索业绩快报关键字
+        # searchkey: 业绩快报
+        for page in range(10):
+            print("page >> {}".format(page))
+            post_data = {
+                'pageNum': page,
+                'pageSize': 30,
+                'column': 'szse',
+                'tabName': 'fulltext',
+                'plate': '',
+                'stock': '',
+                'searchkey': '业绩快报',
+                'secid': '',
+                'category': '',
+                'trade': '',
+                'seDate': se_date,
+                'sortName': '',
+                'sortType': '',
+                'isHLtitle': True,
+            }
+            resp = self.my_post(self.api, post_data)
+            if resp.status_code == 200:
+                text = resp.text
+                if text == '':
+                    break
+
+                py_datas = json.loads(text)
+                ants = py_datas.get("announcements")
+                if ants is None:
+                    break
+
+                for ant in ants:
+                    item = dict()
+                    item['SecuCode'] = ant.get('secCode')
+                    item['SecuAbbr'] = ant.get('secName')
+                    item['AntId'] = ant.get("announcementId")
+                    item['AntTitle'] = ant.get("announcementTitle")
+                    item['Category'] = 'category_yjkb_szsh'
+                    time_stamp = ant.get("announcementTime") / 1000
+                    item.update({'AntTime': datetime.datetime.fromtimestamp(time_stamp)})
+                    item.update({'AntDoc': 'http://static.cninfo.com.cn/' + ant.get("adjunctUrl")})
+                    print(item)
+                    self._spider_conn.table_insert(self.history_table_name, item)
+            else:
+                print(resp)
 
 
 if __name__ == '__main__':
