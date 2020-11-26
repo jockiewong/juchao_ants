@@ -1,4 +1,5 @@
 import datetime
+import time
 
 from spiders.juchao_finance_hotfixes_spider import JuchaoFinanceSpider
 from spiders.juchao_historyants_spider import JuchaoHistorySpider
@@ -24,5 +25,6 @@ for num in range(5):
     print(num)
     _start = datetime.datetime(_now.year - num - 1, _now.month, _now.day)
     _end = datetime.datetime(_now.year - num, _now.month, _now.day)
-    print(_start, _end)
+    print("年份: ", _start, _end)
     finance_his.start(start_date=_start, end_date=_end)
+    time.sleep(10)
