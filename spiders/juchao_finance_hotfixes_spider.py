@@ -86,6 +86,11 @@ class JuchaoFinanceSpider(object):
                 'searchkey': '',
                 'secid': '',
                 # 财务包含以下几个版块: 年报、半年报、一季报、三季报、业绩预告
+                # 年报: category_ndbg_szsh
+                # 半年报: category_bndbg_szsh
+                # 一季报: category_yjdbg_szsh
+                # 三季报: category_sjdbg_szsh
+                # 业绩预告: category_yjygjxz_szsh
                 'category': 'category_ndbg_szsh;category_bndbg_szsh;category_yjdbg_szsh;category_sjdbg_szsh;category_yjygjxz_szsh',
                 'trade': '',
                 'seDate': se_date,
