@@ -2,6 +2,7 @@ import datetime
 import json
 import os
 import sys
+import time
 
 import requests
 import retrying
@@ -81,7 +82,7 @@ class JuchaoFinanceSpider(object):
         se_date = "{}~{}".format(start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d"))
         print(se_date)
 
-        for page in range(500):
+        for page in range(10):
             print("page >> {}".format(page))
             for category in ('category_ndbg_szsh',
                              'category_bndbg_szsh',
@@ -138,3 +139,10 @@ class JuchaoFinanceSpider(object):
                         self._spider_conn.table_insert(self.history_table_name, item)
                 else:
                     print(resp)
+
+
+if __name__ == '__main__':
+    while True:
+        finance_his = JuchaoFinanceSpider()
+        finance_his.start()
+        time.sleep(180)
